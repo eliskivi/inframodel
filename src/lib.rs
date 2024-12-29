@@ -5,8 +5,8 @@ mod parsed_value;
 
 pub use infra_file::{File, Format, InfraFile, Spatial};
 pub use investigation::{
-    Classification, Coordinates, DepthlessRockSample, Equipment, InitialBorehole, Investigation,
-    Line, Method, Organisations, Program, Record, Standpipe, Termination, Work,
+    Classification, Coordinates, DepthlessRockSample, Equipment, InitialBorehole, Investigation, Line, Method, Organisations, Program,
+    Record, Standpipe, Termination, Work,
 };
 pub use observation::Observation;
 pub use parsed_value::ParsedValue;

@@ -1,7 +1,4 @@
-use crate::investigation::{
-    ClassificationName, Digitized, InitialBoreToken, Investigation, MethodToken, Sampler,
-    TerminationToken,
-};
+use crate::investigation::{ClassificationName, Digitized, InitialBoreToken, Investigation, MethodToken, Sampler, TerminationToken};
 use crate::observation::Observation;
 use crate::parsed_value::{ParsedValue, TryParse};
 
@@ -282,9 +279,7 @@ impl InfraFile {
     }
 
     fn parse_gl(inv: &mut Investigation, params: &[&str]) {
-        inv.program
-            .guide
-            .push(Self::parse_value::<String>(params, 0));
+        inv.program.guide.push(Self::parse_value::<String>(params, 0));
     }
 
     fn parse_at(inv: &mut Investigation, params: &[&str]) {
@@ -325,94 +320,41 @@ impl InfraFile {
     fn parse_hm(inv: &mut Investigation, params: &[&str]) {
         let combined = params.join(" ");
 
-        if inv.observations.is_empty() {
-            inv.notes.push(ParsedValue::Some(combined));
-        } else if let Some(last_obs) = inv.observations.last_mut() {
-            match last_obs {
-                Observation::PA { notes, .. } => {
-                    notes.push(ParsedValue::Some(combined));
-                }
-                Observation::PI { notes, .. } => {
-                    notes.push(ParsedValue::Some(combined));
-                }
-                Observation::LY { notes, .. } => {
-                    notes.push(ParsedValue::Some(combined));
-                }
-                Observation::SI { notes, .. } => {
-                    notes.push(ParsedValue::Some(combined));
-                }
-                Observation::HE { notes, .. } => {
-                    notes.push(ParsedValue::Some(combined));
-                }
-                Observation::HK { notes, .. } => {
-                    notes.push(ParsedValue::Some(combined));
-                }
-                Observation::PT { notes, .. } => {
-                    notes.push(ParsedValue::Some(combined));
-                }
-                Observation::TR { notes, .. } => {
-                    notes.push(ParsedValue::Some(combined));
-                }
-                Observation::PR { notes, .. } => {
-                    notes.push(ParsedValue::Some(combined));
-                }
-                Observation::CP { notes, .. } => {
-                    notes.push(ParsedValue::Some(combined));
-                }
-                Observation::CU { notes, .. } => {
-                    notes.push(ParsedValue::Some(combined));
-                }
-                Observation::HP { notes, .. } => {
-                    notes.push(ParsedValue::Some(combined));
-                }
-                Observation::PO { notes, .. } => {
-                    notes.push(ParsedValue::Some(combined));
-                }
-                Observation::MW { notes, .. } => {
-                    notes.push(ParsedValue::Some(combined));
-                }
-                Observation::VP { notes, .. } => {
-                    notes.push(ParsedValue::Some(combined));
-                }
-                Observation::VO { notes, .. } => {
-                    notes.push(ParsedValue::Some(combined));
-                }
-                Observation::VK { notes, .. } => {
-                    notes.push(ParsedValue::Some(combined));
-                }
-                Observation::VPK { notes, .. } => {
-                    notes.push(ParsedValue::Some(combined));
-                }
-                Observation::HV { notes, .. } => {
-                    notes.push(ParsedValue::Some(combined));
-                }
-                Observation::HU { notes, .. } => {
-                    notes.push(ParsedValue::Some(combined));
-                }
-                Observation::PS { notes, .. } => {
-                    notes.push(ParsedValue::Some(combined));
-                }
-                Observation::PM { notes, .. } => {
-                    notes.push(ParsedValue::Some(combined));
-                }
-                Observation::KO { notes, .. } => {
-                    notes.push(ParsedValue::Some(combined));
-                }
-                Observation::KE { notes, .. } => {
-                    notes.push(ParsedValue::Some(combined));
-                }
-                Observation::KR { notes, .. } => {
-                    notes.push(ParsedValue::Some(combined));
-                }
-                Observation::NO { notes, .. } => {
-                    notes.push(ParsedValue::Some(combined));
-                }
-                Observation::NE { notes, .. } => {
-                    notes.push(ParsedValue::Some(combined));
-                }
-                _ => {
-                    // panic!("No observations available to add hidden text.");
-                }
+        match inv.observations.last_mut() {
+            Some(
+                Observation::PA { notes, .. }
+                | Observation::PI { notes, .. }
+                | Observation::LY { notes, .. }
+                | Observation::SI { notes, .. }
+                | Observation::HE { notes, .. }
+                | Observation::HK { notes, .. }
+                | Observation::PT { notes, .. }
+                | Observation::TR { notes, .. }
+                | Observation::PR { notes, .. }
+                | Observation::CP { notes, .. }
+                | Observation::CU { notes, .. }
+                | Observation::HP { notes, .. }
+                | Observation::PO { notes, .. }
+                | Observation::MW { notes, .. }
+                | Observation::VP { notes, .. }
+                | Observation::VO { notes, .. }
+                | Observation::VK { notes, .. }
+                | Observation::VPK { notes, .. }
+                | Observation::HV { notes, .. }
+                | Observation::HU { notes, .. }
+                | Observation::PS { notes, .. }
+                | Observation::PM { notes, .. }
+                | Observation::KO { notes, .. }
+                | Observation::KE { notes, .. }
+                | Observation::KR { notes, .. }
+                | Observation::NO { notes, .. }
+                | Observation::NE { notes, .. },
+            ) => {
+                notes.push(ParsedValue::Some(combined));
+            }
+            Some(_) => {}
+            None => {
+                inv.free_text.push(ParsedValue::Some(combined));
             }
         }
     }
@@ -420,94 +362,41 @@ impl InfraFile {
     fn parse_tx(inv: &mut Investigation, params: &[&str]) {
         let combined = params.join(" ");
 
-        if inv.observations.is_empty() {
-            inv.free_text.push(ParsedValue::Some(combined));
-        } else if let Some(last_obs) = inv.observations.last_mut() {
-            match last_obs {
-                Observation::PA { free_text, .. } => {
-                    free_text.push(ParsedValue::Some(combined));
-                }
-                Observation::PI { free_text, .. } => {
-                    free_text.push(ParsedValue::Some(combined));
-                }
-                Observation::LY { free_text, .. } => {
-                    free_text.push(ParsedValue::Some(combined));
-                }
-                Observation::SI { free_text, .. } => {
-                    free_text.push(ParsedValue::Some(combined));
-                }
-                Observation::HE { free_text, .. } => {
-                    free_text.push(ParsedValue::Some(combined));
-                }
-                Observation::HK { free_text, .. } => {
-                    free_text.push(ParsedValue::Some(combined));
-                }
-                Observation::PT { free_text, .. } => {
-                    free_text.push(ParsedValue::Some(combined));
-                }
-                Observation::TR { free_text, .. } => {
-                    free_text.push(ParsedValue::Some(combined));
-                }
-                Observation::PR { free_text, .. } => {
-                    free_text.push(ParsedValue::Some(combined));
-                }
-                Observation::CP { free_text, .. } => {
-                    free_text.push(ParsedValue::Some(combined));
-                }
-                Observation::CU { free_text, .. } => {
-                    free_text.push(ParsedValue::Some(combined));
-                }
-                Observation::HP { free_text, .. } => {
-                    free_text.push(ParsedValue::Some(combined));
-                }
-                Observation::PO { free_text, .. } => {
-                    free_text.push(ParsedValue::Some(combined));
-                }
-                Observation::MW { free_text, .. } => {
-                    free_text.push(ParsedValue::Some(combined));
-                }
-                Observation::VP { free_text, .. } => {
-                    free_text.push(ParsedValue::Some(combined));
-                }
-                Observation::VO { free_text, .. } => {
-                    free_text.push(ParsedValue::Some(combined));
-                }
-                Observation::VK { free_text, .. } => {
-                    free_text.push(ParsedValue::Some(combined));
-                }
-                Observation::VPK { free_text, .. } => {
-                    free_text.push(ParsedValue::Some(combined));
-                }
-                Observation::HV { free_text, .. } => {
-                    free_text.push(ParsedValue::Some(combined));
-                }
-                Observation::HU { free_text, .. } => {
-                    free_text.push(ParsedValue::Some(combined));
-                }
-                Observation::PS { free_text, .. } => {
-                    free_text.push(ParsedValue::Some(combined));
-                }
-                Observation::PM { free_text, .. } => {
-                    free_text.push(ParsedValue::Some(combined));
-                }
-                Observation::KO { free_text, .. } => {
-                    free_text.push(ParsedValue::Some(combined));
-                }
-                Observation::KE { free_text, .. } => {
-                    free_text.push(ParsedValue::Some(combined));
-                }
-                Observation::KR { free_text, .. } => {
-                    free_text.push(ParsedValue::Some(combined));
-                }
-                Observation::NO { free_text, .. } => {
-                    free_text.push(ParsedValue::Some(combined));
-                }
-                Observation::NE { free_text, .. } => {
-                    free_text.push(ParsedValue::Some(combined));
-                }
-                _ => {
-                    // panic!("No observations available to add hidden text.");
-                }
+        match inv.observations.last_mut() {
+            Some(
+                Observation::PA { free_text, .. }
+                | Observation::PI { free_text, .. }
+                | Observation::LY { free_text, .. }
+                | Observation::SI { free_text, .. }
+                | Observation::HE { free_text, .. }
+                | Observation::HK { free_text, .. }
+                | Observation::PT { free_text, .. }
+                | Observation::TR { free_text, .. }
+                | Observation::PR { free_text, .. }
+                | Observation::CP { free_text, .. }
+                | Observation::CU { free_text, .. }
+                | Observation::HP { free_text, .. }
+                | Observation::PO { free_text, .. }
+                | Observation::MW { free_text, .. }
+                | Observation::VP { free_text, .. }
+                | Observation::VO { free_text, .. }
+                | Observation::VK { free_text, .. }
+                | Observation::VPK { free_text, .. }
+                | Observation::HV { free_text, .. }
+                | Observation::HU { free_text, .. }
+                | Observation::PS { free_text, .. }
+                | Observation::PM { free_text, .. }
+                | Observation::KO { free_text, .. }
+                | Observation::KE { free_text, .. }
+                | Observation::KR { free_text, .. }
+                | Observation::NO { free_text, .. }
+                | Observation::NE { free_text, .. },
+            ) => {
+                free_text.push(ParsedValue::Some(combined));
+            }
+            Some(_) => {}
+            None => {
+                inv.free_text.push(ParsedValue::Some(combined));
             }
         }
     }
@@ -515,94 +404,41 @@ impl InfraFile {
     fn parse_ht(inv: &mut Investigation, params: &[&str]) {
         let combined = params.join(" ");
 
-        if inv.observations.is_empty() {
-            inv.hidden_text.push(ParsedValue::Some(combined));
-        } else if let Some(last_obs) = inv.observations.last_mut() {
-            match last_obs {
-                Observation::PA { hidden_text, .. } => {
-                    hidden_text.push(ParsedValue::Some(combined));
-                }
-                Observation::PI { hidden_text, .. } => {
-                    hidden_text.push(ParsedValue::Some(combined));
-                }
-                Observation::LY { hidden_text, .. } => {
-                    hidden_text.push(ParsedValue::Some(combined));
-                }
-                Observation::SI { hidden_text, .. } => {
-                    hidden_text.push(ParsedValue::Some(combined));
-                }
-                Observation::HE { hidden_text, .. } => {
-                    hidden_text.push(ParsedValue::Some(combined));
-                }
-                Observation::HK { hidden_text, .. } => {
-                    hidden_text.push(ParsedValue::Some(combined));
-                }
-                Observation::PT { hidden_text, .. } => {
-                    hidden_text.push(ParsedValue::Some(combined));
-                }
-                Observation::TR { hidden_text, .. } => {
-                    hidden_text.push(ParsedValue::Some(combined));
-                }
-                Observation::PR { hidden_text, .. } => {
-                    hidden_text.push(ParsedValue::Some(combined));
-                }
-                Observation::CP { hidden_text, .. } => {
-                    hidden_text.push(ParsedValue::Some(combined));
-                }
-                Observation::CU { hidden_text, .. } => {
-                    hidden_text.push(ParsedValue::Some(combined));
-                }
-                Observation::HP { hidden_text, .. } => {
-                    hidden_text.push(ParsedValue::Some(combined));
-                }
-                Observation::PO { hidden_text, .. } => {
-                    hidden_text.push(ParsedValue::Some(combined));
-                }
-                Observation::MW { hidden_text, .. } => {
-                    hidden_text.push(ParsedValue::Some(combined));
-                }
-                Observation::VP { hidden_text, .. } => {
-                    hidden_text.push(ParsedValue::Some(combined));
-                }
-                Observation::VO { hidden_text, .. } => {
-                    hidden_text.push(ParsedValue::Some(combined));
-                }
-                Observation::VK { hidden_text, .. } => {
-                    hidden_text.push(ParsedValue::Some(combined));
-                }
-                Observation::VPK { hidden_text, .. } => {
-                    hidden_text.push(ParsedValue::Some(combined));
-                }
-                Observation::HV { hidden_text, .. } => {
-                    hidden_text.push(ParsedValue::Some(combined));
-                }
-                Observation::HU { hidden_text, .. } => {
-                    hidden_text.push(ParsedValue::Some(combined));
-                }
-                Observation::PS { hidden_text, .. } => {
-                    hidden_text.push(ParsedValue::Some(combined));
-                }
-                Observation::PM { hidden_text, .. } => {
-                    hidden_text.push(ParsedValue::Some(combined));
-                }
-                Observation::KO { hidden_text, .. } => {
-                    hidden_text.push(ParsedValue::Some(combined));
-                }
-                Observation::KE { hidden_text, .. } => {
-                    hidden_text.push(ParsedValue::Some(combined));
-                }
-                Observation::KR { hidden_text, .. } => {
-                    hidden_text.push(ParsedValue::Some(combined));
-                }
-                Observation::NO { hidden_text, .. } => {
-                    hidden_text.push(ParsedValue::Some(combined));
-                }
-                Observation::NE { hidden_text, .. } => {
-                    hidden_text.push(ParsedValue::Some(combined));
-                }
-                _ => {
-                    // panic!("No observations available to add hidden text.");
-                }
+        match inv.observations.last_mut() {
+            Some(
+                Observation::PA { hidden_text, .. }
+                | Observation::PI { hidden_text, .. }
+                | Observation::LY { hidden_text, .. }
+                | Observation::SI { hidden_text, .. }
+                | Observation::HE { hidden_text, .. }
+                | Observation::HK { hidden_text, .. }
+                | Observation::PT { hidden_text, .. }
+                | Observation::TR { hidden_text, .. }
+                | Observation::PR { hidden_text, .. }
+                | Observation::CP { hidden_text, .. }
+                | Observation::CU { hidden_text, .. }
+                | Observation::HP { hidden_text, .. }
+                | Observation::PO { hidden_text, .. }
+                | Observation::MW { hidden_text, .. }
+                | Observation::VP { hidden_text, .. }
+                | Observation::VO { hidden_text, .. }
+                | Observation::VK { hidden_text, .. }
+                | Observation::VPK { hidden_text, .. }
+                | Observation::HV { hidden_text, .. }
+                | Observation::HU { hidden_text, .. }
+                | Observation::PS { hidden_text, .. }
+                | Observation::PM { hidden_text, .. }
+                | Observation::KO { hidden_text, .. }
+                | Observation::KE { hidden_text, .. }
+                | Observation::KR { hidden_text, .. }
+                | Observation::NO { hidden_text, .. }
+                | Observation::NE { hidden_text, .. },
+            ) => {
+                hidden_text.push(ParsedValue::Some(combined));
+            }
+            Some(_) => {}
+            None => {
+                inv.free_text.push(ParsedValue::Some(combined));
             }
         }
     }
@@ -610,174 +446,40 @@ impl InfraFile {
     fn parse_em(inv: &mut Investigation, params: &[&str]) {
         let combined = params.join(" ");
 
-        if let Some(last_obs) = inv.observations.last_mut() {
-            match last_obs {
-                Observation::PA {
-                    unofficial_soil_type,
-                    ..
-                } => {
-                    unofficial_soil_type.push(ParsedValue::Some(combined));
-                }
-                Observation::PI {
-                    unofficial_soil_type,
-                    ..
-                } => {
-                    unofficial_soil_type.push(ParsedValue::Some(combined));
-                }
-                Observation::LY {
-                    unofficial_soil_type,
-                    ..
-                } => {
-                    unofficial_soil_type.push(ParsedValue::Some(combined));
-                }
-                Observation::SI {
-                    unofficial_soil_type,
-                    ..
-                } => {
-                    unofficial_soil_type.push(ParsedValue::Some(combined));
-                }
-                Observation::HE {
-                    unofficial_soil_type,
-                    ..
-                } => {
-                    unofficial_soil_type.push(ParsedValue::Some(combined));
-                }
-                Observation::HK {
-                    unofficial_soil_type,
-                    ..
-                } => {
-                    unofficial_soil_type.push(ParsedValue::Some(combined));
-                }
-                Observation::PT {
-                    unofficial_soil_type,
-                    ..
-                } => {
-                    unofficial_soil_type.push(ParsedValue::Some(combined));
-                }
-                Observation::TR {
-                    unofficial_soil_type,
-                    ..
-                } => {
-                    unofficial_soil_type.push(ParsedValue::Some(combined));
-                }
-                Observation::PR {
-                    unofficial_soil_type,
-                    ..
-                } => {
-                    unofficial_soil_type.push(ParsedValue::Some(combined));
-                }
-                Observation::CP {
-                    unofficial_soil_type,
-                    ..
-                } => {
-                    unofficial_soil_type.push(ParsedValue::Some(combined));
-                }
-                Observation::CU {
-                    unofficial_soil_type,
-                    ..
-                } => {
-                    unofficial_soil_type.push(ParsedValue::Some(combined));
-                }
-                Observation::HP {
-                    unofficial_soil_type,
-                    ..
-                } => {
-                    unofficial_soil_type.push(ParsedValue::Some(combined));
-                }
-                Observation::PO {
-                    unofficial_soil_type,
-                    ..
-                } => {
-                    unofficial_soil_type.push(ParsedValue::Some(combined));
-                }
-                Observation::MW {
-                    unofficial_soil_type,
-                    ..
-                } => {
-                    unofficial_soil_type.push(ParsedValue::Some(combined));
-                }
-                Observation::VP {
-                    unofficial_soil_type,
-                    ..
-                } => {
-                    unofficial_soil_type.push(ParsedValue::Some(combined));
-                }
-                Observation::VO {
-                    unofficial_soil_type,
-                    ..
-                } => {
-                    unofficial_soil_type.push(ParsedValue::Some(combined));
-                }
-                Observation::VK {
-                    unofficial_soil_type,
-                    ..
-                } => {
-                    unofficial_soil_type.push(ParsedValue::Some(combined));
-                }
-                Observation::VPK {
-                    unofficial_soil_type,
-                    ..
-                } => {
-                    unofficial_soil_type.push(ParsedValue::Some(combined));
-                }
-                Observation::HV {
-                    unofficial_soil_type,
-                    ..
-                } => {
-                    unofficial_soil_type.push(ParsedValue::Some(combined));
-                }
-                Observation::HU {
-                    unofficial_soil_type,
-                    ..
-                } => {
-                    unofficial_soil_type.push(ParsedValue::Some(combined));
-                }
-                Observation::PS {
-                    unofficial_soil_type,
-                    ..
-                } => {
-                    unofficial_soil_type.push(ParsedValue::Some(combined));
-                }
-                Observation::PM {
-                    unofficial_soil_type,
-                    ..
-                } => {
-                    unofficial_soil_type.push(ParsedValue::Some(combined));
-                }
-                Observation::KO {
-                    unofficial_soil_type,
-                    ..
-                } => {
-                    unofficial_soil_type.push(ParsedValue::Some(combined));
-                }
-                Observation::KE {
-                    unofficial_soil_type,
-                    ..
-                } => {
-                    unofficial_soil_type.push(ParsedValue::Some(combined));
-                }
-                Observation::KR {
-                    unofficial_soil_type,
-                    ..
-                } => {
-                    unofficial_soil_type.push(ParsedValue::Some(combined));
-                }
-                Observation::NO {
-                    unofficial_soil_type,
-                    ..
-                } => {
-                    unofficial_soil_type.push(ParsedValue::Some(combined));
-                }
-                Observation::NE {
-                    unofficial_soil_type,
-                    ..
-                } => {
-                    unofficial_soil_type.push(ParsedValue::Some(combined));
-                }
-                _ => {
-                    panic!("No observations available to add hidden text.");
-                }
+        match inv.observations.last_mut() {
+            Some(
+                Observation::PA { unofficial_soil_type, .. }
+                | Observation::PI { unofficial_soil_type, .. }
+                | Observation::LY { unofficial_soil_type, .. }
+                | Observation::SI { unofficial_soil_type, .. }
+                | Observation::HE { unofficial_soil_type, .. }
+                | Observation::HK { unofficial_soil_type, .. }
+                | Observation::PT { unofficial_soil_type, .. }
+                | Observation::TR { unofficial_soil_type, .. }
+                | Observation::PR { unofficial_soil_type, .. }
+                | Observation::CP { unofficial_soil_type, .. }
+                | Observation::CU { unofficial_soil_type, .. }
+                | Observation::HP { unofficial_soil_type, .. }
+                | Observation::PO { unofficial_soil_type, .. }
+                | Observation::MW { unofficial_soil_type, .. }
+                | Observation::VP { unofficial_soil_type, .. }
+                | Observation::VO { unofficial_soil_type, .. }
+                | Observation::VK { unofficial_soil_type, .. }
+                | Observation::VPK { unofficial_soil_type, .. }
+                | Observation::HV { unofficial_soil_type, .. }
+                | Observation::HU { unofficial_soil_type, .. }
+                | Observation::PS { unofficial_soil_type, .. }
+                | Observation::PM { unofficial_soil_type, .. }
+                | Observation::KO { unofficial_soil_type, .. }
+                | Observation::KE { unofficial_soil_type, .. }
+                | Observation::KR { unofficial_soil_type, .. }
+                | Observation::NO { unofficial_soil_type, .. }
+                | Observation::NE { unofficial_soil_type, .. },
+            ) => {
+                unofficial_soil_type.push(ParsedValue::Some(combined));
             }
+            Some(_) => {}
+            None => {}
         }
     }
 

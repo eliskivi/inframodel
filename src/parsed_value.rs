@@ -1,7 +1,5 @@
 use crate::infra_file::{CoordinateSystem, ElevationSystem};
-use crate::investigation::{
-    ClassificationName, Digitized, InitialBoreToken, MethodToken, Sampler, TerminationToken,
-};
+use crate::investigation::{ClassificationName, Digitized, InitialBoreToken, MethodToken, Sampler, TerminationToken};
 use chrono::NaiveDate;
 use std::fmt::{self, Display, Formatter};
 
@@ -89,9 +87,7 @@ impl TryParse for CoordinateSystem {
             "GK29" | "ETRSGK29" | "ETRS-GK29" => Ok(CoordinateSystem::GK29),
             "GK30" | "ETRSGK30" | "ETRS-GK30" => Ok(CoordinateSystem::GK30),
             "GK31" | "ETRSGK31" | "ETRS-GK31" => Ok(CoordinateSystem::GK31),
-            "TM35" | "ETRSTM35" | "ETRS-TM35" | "TM35FIN" | "ETRSTM35FIN" | "ETRS-TM35FIN" => {
-                Ok(CoordinateSystem::TM35)
-            }
+            "TM35" | "ETRSTM35" | "ETRS-TM35" | "TM35FIN" | "ETRSTM35FIN" | "ETRS-TM35FIN" => Ok(CoordinateSystem::TM35),
             _ => Err(input.to_string()),
         }
     }
