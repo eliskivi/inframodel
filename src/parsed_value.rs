@@ -1,4 +1,4 @@
-use crate::investigation::{Digitized, InvestigationToken};
+use crate::investigation::{Digitized, MethodToken};
 use chrono::NaiveDate;
 use std::fmt::{self, Display, Formatter};
 
@@ -48,10 +48,10 @@ pub trait TryParse: Sized {
     fn try_parse(input: &str) -> Result<Self, String>;
 }
 
-impl TryParse for InvestigationToken {
+impl TryParse for MethodToken {
     fn try_parse(input: &str) -> Result<Self, String> {
         let method = Self::from_string(input);
-        if method == InvestigationToken::None {
+        if method == MethodToken::None {
             Err(input.to_string())
         } else {
             Ok(method)

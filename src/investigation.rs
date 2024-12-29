@@ -4,12 +4,11 @@ use chrono::NaiveDate;
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
 pub struct Investigation {
-    pub owner_organisation: OwnerOrganisation,
+    pub organisations: Organisations,
     pub soil_classification: SoilClassification,
-    pub investigator_organisation: InvestigatorOrganisation,
     pub work: Work,
     pub record: Record,
-    pub investigation_method: InvestigationMethod,
+    pub investigation_method: Method,
     pub equipment: Equipment,
     pub coordinates: Coordinates,
     pub line: Line,
@@ -27,17 +26,14 @@ pub struct Investigation {
 }
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
-pub struct OwnerOrganisation {
-    pub name: ParsedValue<String>,
+pub struct Organisations {
+    pub owner_name: ParsedValue<String>,
+    pub investigator_name: ParsedValue<String>,
 }
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
 pub struct SoilClassification {
-    pub name: ParsedValue<String>,
-}
-
-#[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
-pub struct InvestigatorOrganisation {
+    // TODO: TODO: Implement GEO and ISO enum; GEO is default
     pub name: ParsedValue<String>,
 }
 
@@ -58,11 +54,12 @@ pub struct Record {
 }
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
-pub struct InvestigationMethod {
-    pub token: ParsedValue<InvestigationToken>,
+pub struct Method {
+    pub token: ParsedValue<MethodToken>,
     pub category: ParsedValue<i32>,
     pub id: ParsedValue<String>,
     pub standard: ParsedValue<String>,
+    // TODO: Implement common samplers enum (K, L, pmk, R, st50, st60)
     pub sampler: ParsedValue<String>,
     pub specifier: ParsedValue<String>,
 }
@@ -76,9 +73,11 @@ pub struct Equipment {
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
 pub struct Coordinates {
+    // TODO: Implement "-999999" as unknown for x and y coordinates
     pub x: ParsedValue<f32>,
     pub y: ParsedValue<f32>,
     pub start_elevation: ParsedValue<f32>,
+    // TODO: Implement "00000000" as unknown date
     pub date: ParsedValue<NaiveDate>,
     pub point_id: ParsedValue<String>,
 }
@@ -92,6 +91,7 @@ pub struct Line {
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
 pub struct Termination {
+    // TODO: Implement a termination type enum of known values
     pub token: ParsedValue<String>,
 }
 
@@ -105,12 +105,14 @@ pub struct InvestigationProgram {
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
 pub struct DepthlessRockSample {
+    // TODO: Implement known attributes (attachment 3)
     pub attribute: ParsedValue<String>,
     pub value: ParsedValue<String>,
 }
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
 pub struct InitialBorehole {
+    // TODO: Implement known initial boring methods
     pub depth: ParsedValue<f32>,
     pub method: ParsedValue<String>,
     pub soil_type: ParsedValue<String>,
@@ -145,7 +147,7 @@ impl Investigation {
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-pub enum InvestigationToken {
+pub enum MethodToken {
     #[default]
     None,
     PA,
@@ -177,37 +179,37 @@ pub enum InvestigationToken {
     NE,
 }
 
-impl InvestigationToken {
+impl MethodToken {
     pub fn from_string(input: &str) -> Self {
         match input.to_uppercase().as_str() {
-            "PA" | "WST" => InvestigationToken::PA,
-            "PI" => InvestigationToken::PI,
-            "LY" => InvestigationToken::LY,
-            "SI" | "FVT" => InvestigationToken::SI,
-            "HE" | "DP" => InvestigationToken::HE,
-            "HK" => InvestigationToken::HK,
-            "PT" => InvestigationToken::PT,
-            "TR" => InvestigationToken::TR,
-            "PR" => InvestigationToken::PR,
-            "CP" | "CPT" => InvestigationToken::CP,
-            "CU" | "CPTU" => InvestigationToken::CU,
-            "HP" => InvestigationToken::HP,
-            "PO" => InvestigationToken::PO,
-            "MW" => InvestigationToken::MW,
-            "VP" => InvestigationToken::VP,
-            "VO" => InvestigationToken::VO,
-            "VK" => InvestigationToken::VK,
-            "VPK" => InvestigationToken::VPK,
-            "HV" => InvestigationToken::HV,
-            "HU" => InvestigationToken::HU,
-            "PS" | "PMT" => InvestigationToken::PS,
-            "PM" => InvestigationToken::PM,
-            "KO" => InvestigationToken::KO,
-            "KE" => InvestigationToken::KE,
-            "KR" => InvestigationToken::KR,
-            "NO" => InvestigationToken::NO,
-            "NE" => InvestigationToken::NE,
-            _ => InvestigationToken::None,
+            "PA" | "WST" => MethodToken::PA,
+            "PI" => MethodToken::PI,
+            "LY" => MethodToken::LY,
+            "SI" | "FVT" => MethodToken::SI,
+            "HE" | "DP" => MethodToken::HE,
+            "HK" => MethodToken::HK,
+            "PT" => MethodToken::PT,
+            "TR" => MethodToken::TR,
+            "PR" => MethodToken::PR,
+            "CP" | "CPT" => MethodToken::CP,
+            "CU" | "CPTU" => MethodToken::CU,
+            "HP" => MethodToken::HP,
+            "PO" => MethodToken::PO,
+            "MW" => MethodToken::MW,
+            "VP" => MethodToken::VP,
+            "VO" => MethodToken::VO,
+            "VK" => MethodToken::VK,
+            "VPK" => MethodToken::VPK,
+            "HV" => MethodToken::HV,
+            "HU" => MethodToken::HU,
+            "PS" | "PMT" => MethodToken::PS,
+            "PM" => MethodToken::PM,
+            "KO" => MethodToken::KO,
+            "KE" => MethodToken::KE,
+            "KR" => MethodToken::KR,
+            "NO" => MethodToken::NO,
+            "NE" => MethodToken::NE,
+            _ => MethodToken::None,
         }
     }
 }

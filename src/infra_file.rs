@@ -1,4 +1,4 @@
-use crate::investigation::{Digitized, Investigation, InvestigationToken};
+use crate::investigation::{Digitized, Investigation, MethodToken};
 use crate::observation::Observation;
 use crate::parsed_value::{ParsedValue, TryParse};
 
@@ -14,8 +14,8 @@ lazy_static! {
 #[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
 pub struct InfraFile {
     pub file: File,
-    pub format: Format,   // FO token
-    pub spatial: Spatial, // KJ token
+    pub format: Format,
+    pub spatial: Spatial,
     pub investigations: Vec<Investigation>,
 }
 
@@ -35,8 +35,10 @@ pub struct Format {
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
 pub struct Spatial {
+    // TODO: Add common Finnish coordinate and elevation systems into an enum
+    // TODO: Implement Unknown coordinate/elevation system marked with "?"
     pub coordinate_system: ParsedValue<String>,
-    pub vertical_datum: ParsedValue<String>,
+    pub elevation_system: ParsedValue<String>,
 }
 
 impl InfraFile {
@@ -105,34 +107,34 @@ impl InfraFile {
                     "RK" => Self::parse_rk(&mut inv, rest),
                     _ if FLOAT_RE.is_match(token) => match &inv.investigation_method.token {
                         ParsedValue::Some(method) => match method {
-                            InvestigationToken::PA => Self::parse_pa(&mut inv, params),
-                            InvestigationToken::PI => Self::parse_pi(&mut inv, params),
-                            InvestigationToken::LY => Self::parse_ly(&mut inv, params),
-                            InvestigationToken::SI => Self::parse_si(&mut inv, params),
-                            InvestigationToken::HE => Self::parse_he(&mut inv, params),
-                            InvestigationToken::HK => Self::parse_hk(&mut inv, params),
-                            InvestigationToken::PT => Self::parse_pt(&mut inv, params),
-                            InvestigationToken::TR => Self::parse_tr(&mut inv, params),
-                            InvestigationToken::PR => Self::parse_pr(&mut inv, params),
-                            InvestigationToken::CP => Self::parse_cp(&mut inv, params),
-                            InvestigationToken::CU => Self::parse_cu(&mut inv, params),
-                            InvestigationToken::HP => Self::parse_hp(&mut inv, params),
-                            InvestigationToken::PO => Self::parse_po(&mut inv, params),
-                            InvestigationToken::MW => Self::parse_mw(&mut inv, params),
-                            InvestigationToken::VP => Self::parse_vp(&mut inv, params),
-                            InvestigationToken::VO => Self::parse_vo(&mut inv, params),
-                            InvestigationToken::VK => Self::parse_vk(&mut inv, params),
-                            InvestigationToken::VPK => Self::parse_vpk(&mut inv, params),
-                            InvestigationToken::HV => Self::parse_hv(&mut inv, params),
-                            InvestigationToken::HU => Self::parse_hu(&mut inv, params),
-                            InvestigationToken::PS => Self::parse_ps(&mut inv, params),
-                            InvestigationToken::PM => Self::parse_pm(&mut inv, params),
-                            InvestigationToken::KO => Self::parse_ko(&mut inv, params),
-                            InvestigationToken::KE => Self::parse_ke(&mut inv, params),
-                            InvestigationToken::KR => Self::parse_kr(&mut inv, params),
-                            InvestigationToken::NO => Self::parse_no(&mut inv, params),
-                            InvestigationToken::NE => Self::parse_ne(&mut inv, params),
-                            InvestigationToken::None => unreachable!("Unknown method: {}", token),
+                            MethodToken::PA => Self::parse_pa(&mut inv, params),
+                            MethodToken::PI => Self::parse_pi(&mut inv, params),
+                            MethodToken::LY => Self::parse_ly(&mut inv, params),
+                            MethodToken::SI => Self::parse_si(&mut inv, params),
+                            MethodToken::HE => Self::parse_he(&mut inv, params),
+                            MethodToken::HK => Self::parse_hk(&mut inv, params),
+                            MethodToken::PT => Self::parse_pt(&mut inv, params),
+                            MethodToken::TR => Self::parse_tr(&mut inv, params),
+                            MethodToken::PR => Self::parse_pr(&mut inv, params),
+                            MethodToken::CP => Self::parse_cp(&mut inv, params),
+                            MethodToken::CU => Self::parse_cu(&mut inv, params),
+                            MethodToken::HP => Self::parse_hp(&mut inv, params),
+                            MethodToken::PO => Self::parse_po(&mut inv, params),
+                            MethodToken::MW => Self::parse_mw(&mut inv, params),
+                            MethodToken::VP => Self::parse_vp(&mut inv, params),
+                            MethodToken::VO => Self::parse_vo(&mut inv, params),
+                            MethodToken::VK => Self::parse_vk(&mut inv, params),
+                            MethodToken::VPK => Self::parse_vpk(&mut inv, params),
+                            MethodToken::HV => Self::parse_hv(&mut inv, params),
+                            MethodToken::HU => Self::parse_hu(&mut inv, params),
+                            MethodToken::PS => Self::parse_ps(&mut inv, params),
+                            MethodToken::PM => Self::parse_pm(&mut inv, params),
+                            MethodToken::KO => Self::parse_ko(&mut inv, params),
+                            MethodToken::KE => Self::parse_ke(&mut inv, params),
+                            MethodToken::KR => Self::parse_kr(&mut inv, params),
+                            MethodToken::NO => Self::parse_no(&mut inv, params),
+                            MethodToken::NE => Self::parse_ne(&mut inv, params),
+                            MethodToken::None => unreachable!("Unknown method: {}", token),
                         },
                         ParsedValue::None => {
                             panic!("No method was specified, got: {}", token);
@@ -158,22 +160,18 @@ impl InfraFile {
     }
 
     fn parse_fo(infra: &mut InfraFile, params: &[&str]) {
-        infra.format = Format {
-            version: Self::parse_value::<String>(params, 0),
-            used_software: Self::parse_value::<String>(params, 1),
-            software_version: Self::parse_value::<String>(params, 2),
-        };
+        infra.format.version = Self::parse_value::<String>(params, 0);
+        infra.format.used_software = Self::parse_value::<String>(params, 1);
+        infra.format.software_version = Self::parse_value::<String>(params, 2);
     }
 
     fn parse_kj(infra: &mut InfraFile, params: &[&str]) {
-        infra.spatial = Spatial {
-            coordinate_system: Self::parse_value::<String>(params, 0),
-            vertical_datum: Self::parse_value::<String>(params, 1),
-        };
+        infra.spatial.coordinate_system = Self::parse_value::<String>(params, 0);
+        infra.spatial.elevation_system = Self::parse_value::<String>(params, 1);
     }
 
     fn parse_om(inv: &mut Investigation, params: &[&str]) {
-        inv.owner_organisation.name = Self::parse_value::<String>(params, 0);
+        inv.organisations.owner_name = Self::parse_value::<String>(params, 0);
     }
 
     fn parse_ml(inv: &mut Investigation, params: &[&str]) {
@@ -181,7 +179,7 @@ impl InfraFile {
     }
 
     fn parse_or(inv: &mut Investigation, params: &[&str]) {
-        inv.investigator_organisation.name = Self::parse_value::<String>(params, 0);
+        inv.organisations.investigator_name = Self::parse_value::<String>(params, 0);
     }
 
     fn parse_ty(inv: &mut Investigation, params: &[&str]) {
@@ -199,7 +197,7 @@ impl InfraFile {
     }
 
     fn parse_tt(inv: &mut Investigation, params: &[&str]) {
-        inv.investigation_method.token = Self::parse_value::<InvestigationToken>(params, 0);
+        inv.investigation_method.token = Self::parse_value::<MethodToken>(params, 0);
         inv.investigation_method.category = Self::parse_value::<i32>(params, 1);
         inv.investigation_method.id = Self::parse_value::<String>(params, 2);
         inv.investigation_method.standard = Self::parse_value::<String>(params, 3);
@@ -381,86 +379,86 @@ impl InfraFile {
             inv.free_text.push(ParsedValue::Some(combined));
         } else if let Some(last_obs) = inv.observations.last_mut() {
             match last_obs {
-                Observation::PA { free_txt, .. } => {
-                    free_txt.push(ParsedValue::Some(combined));
+                Observation::PA { free_text, .. } => {
+                    free_text.push(ParsedValue::Some(combined));
                 }
-                Observation::PI { free_txt, .. } => {
-                    free_txt.push(ParsedValue::Some(combined));
+                Observation::PI { free_text, .. } => {
+                    free_text.push(ParsedValue::Some(combined));
                 }
-                Observation::LY { free_txt, .. } => {
-                    free_txt.push(ParsedValue::Some(combined));
+                Observation::LY { free_text, .. } => {
+                    free_text.push(ParsedValue::Some(combined));
                 }
-                Observation::SI { free_txt, .. } => {
-                    free_txt.push(ParsedValue::Some(combined));
+                Observation::SI { free_text, .. } => {
+                    free_text.push(ParsedValue::Some(combined));
                 }
-                Observation::HE { free_txt, .. } => {
-                    free_txt.push(ParsedValue::Some(combined));
+                Observation::HE { free_text, .. } => {
+                    free_text.push(ParsedValue::Some(combined));
                 }
-                Observation::HK { free_txt, .. } => {
-                    free_txt.push(ParsedValue::Some(combined));
+                Observation::HK { free_text, .. } => {
+                    free_text.push(ParsedValue::Some(combined));
                 }
-                Observation::PT { free_txt, .. } => {
-                    free_txt.push(ParsedValue::Some(combined));
+                Observation::PT { free_text, .. } => {
+                    free_text.push(ParsedValue::Some(combined));
                 }
-                Observation::TR { free_txt, .. } => {
-                    free_txt.push(ParsedValue::Some(combined));
+                Observation::TR { free_text, .. } => {
+                    free_text.push(ParsedValue::Some(combined));
                 }
-                Observation::PR { free_txt, .. } => {
-                    free_txt.push(ParsedValue::Some(combined));
+                Observation::PR { free_text, .. } => {
+                    free_text.push(ParsedValue::Some(combined));
                 }
-                Observation::CP { free_txt, .. } => {
-                    free_txt.push(ParsedValue::Some(combined));
+                Observation::CP { free_text, .. } => {
+                    free_text.push(ParsedValue::Some(combined));
                 }
-                Observation::CU { free_txt, .. } => {
-                    free_txt.push(ParsedValue::Some(combined));
+                Observation::CU { free_text, .. } => {
+                    free_text.push(ParsedValue::Some(combined));
                 }
-                Observation::HP { free_txt, .. } => {
-                    free_txt.push(ParsedValue::Some(combined));
+                Observation::HP { free_text, .. } => {
+                    free_text.push(ParsedValue::Some(combined));
                 }
-                Observation::PO { free_txt, .. } => {
-                    free_txt.push(ParsedValue::Some(combined));
+                Observation::PO { free_text, .. } => {
+                    free_text.push(ParsedValue::Some(combined));
                 }
-                Observation::MW { free_txt, .. } => {
-                    free_txt.push(ParsedValue::Some(combined));
+                Observation::MW { free_text, .. } => {
+                    free_text.push(ParsedValue::Some(combined));
                 }
-                Observation::VP { free_txt, .. } => {
-                    free_txt.push(ParsedValue::Some(combined));
+                Observation::VP { free_text, .. } => {
+                    free_text.push(ParsedValue::Some(combined));
                 }
-                Observation::VO { free_txt, .. } => {
-                    free_txt.push(ParsedValue::Some(combined));
+                Observation::VO { free_text, .. } => {
+                    free_text.push(ParsedValue::Some(combined));
                 }
-                Observation::VK { free_txt, .. } => {
-                    free_txt.push(ParsedValue::Some(combined));
+                Observation::VK { free_text, .. } => {
+                    free_text.push(ParsedValue::Some(combined));
                 }
-                Observation::VPK { free_txt, .. } => {
-                    free_txt.push(ParsedValue::Some(combined));
+                Observation::VPK { free_text, .. } => {
+                    free_text.push(ParsedValue::Some(combined));
                 }
-                Observation::HV { free_txt, .. } => {
-                    free_txt.push(ParsedValue::Some(combined));
+                Observation::HV { free_text, .. } => {
+                    free_text.push(ParsedValue::Some(combined));
                 }
-                Observation::HU { free_txt, .. } => {
-                    free_txt.push(ParsedValue::Some(combined));
+                Observation::HU { free_text, .. } => {
+                    free_text.push(ParsedValue::Some(combined));
                 }
-                Observation::PS { free_txt, .. } => {
-                    free_txt.push(ParsedValue::Some(combined));
+                Observation::PS { free_text, .. } => {
+                    free_text.push(ParsedValue::Some(combined));
                 }
-                Observation::PM { free_txt, .. } => {
-                    free_txt.push(ParsedValue::Some(combined));
+                Observation::PM { free_text, .. } => {
+                    free_text.push(ParsedValue::Some(combined));
                 }
-                Observation::KO { free_txt, .. } => {
-                    free_txt.push(ParsedValue::Some(combined));
+                Observation::KO { free_text, .. } => {
+                    free_text.push(ParsedValue::Some(combined));
                 }
-                Observation::KE { free_txt, .. } => {
-                    free_txt.push(ParsedValue::Some(combined));
+                Observation::KE { free_text, .. } => {
+                    free_text.push(ParsedValue::Some(combined));
                 }
-                Observation::KR { free_txt, .. } => {
-                    free_txt.push(ParsedValue::Some(combined));
+                Observation::KR { free_text, .. } => {
+                    free_text.push(ParsedValue::Some(combined));
                 }
-                Observation::NO { free_txt, .. } => {
-                    free_txt.push(ParsedValue::Some(combined));
+                Observation::NO { free_text, .. } => {
+                    free_text.push(ParsedValue::Some(combined));
                 }
-                Observation::NE { free_txt, .. } => {
-                    free_txt.push(ParsedValue::Some(combined));
+                Observation::NE { free_text, .. } => {
+                    free_text.push(ParsedValue::Some(combined));
                 }
                 _ => {
                     panic!("No observations available to add hidden text.");
@@ -476,86 +474,86 @@ impl InfraFile {
             inv.hidden_text.push(ParsedValue::Some(combined));
         } else if let Some(last_obs) = inv.observations.last_mut() {
             match last_obs {
-                Observation::PA { hidden_txt, .. } => {
-                    hidden_txt.push(ParsedValue::Some(combined));
+                Observation::PA { hidden_text, .. } => {
+                    hidden_text.push(ParsedValue::Some(combined));
                 }
-                Observation::PI { hidden_txt, .. } => {
-                    hidden_txt.push(ParsedValue::Some(combined));
+                Observation::PI { hidden_text, .. } => {
+                    hidden_text.push(ParsedValue::Some(combined));
                 }
-                Observation::LY { hidden_txt, .. } => {
-                    hidden_txt.push(ParsedValue::Some(combined));
+                Observation::LY { hidden_text, .. } => {
+                    hidden_text.push(ParsedValue::Some(combined));
                 }
-                Observation::SI { hidden_txt, .. } => {
-                    hidden_txt.push(ParsedValue::Some(combined));
+                Observation::SI { hidden_text, .. } => {
+                    hidden_text.push(ParsedValue::Some(combined));
                 }
-                Observation::HE { hidden_txt, .. } => {
-                    hidden_txt.push(ParsedValue::Some(combined));
+                Observation::HE { hidden_text, .. } => {
+                    hidden_text.push(ParsedValue::Some(combined));
                 }
-                Observation::HK { hidden_txt, .. } => {
-                    hidden_txt.push(ParsedValue::Some(combined));
+                Observation::HK { hidden_text, .. } => {
+                    hidden_text.push(ParsedValue::Some(combined));
                 }
-                Observation::PT { hidden_txt, .. } => {
-                    hidden_txt.push(ParsedValue::Some(combined));
+                Observation::PT { hidden_text, .. } => {
+                    hidden_text.push(ParsedValue::Some(combined));
                 }
-                Observation::TR { hidden_txt, .. } => {
-                    hidden_txt.push(ParsedValue::Some(combined));
+                Observation::TR { hidden_text, .. } => {
+                    hidden_text.push(ParsedValue::Some(combined));
                 }
-                Observation::PR { hidden_txt, .. } => {
-                    hidden_txt.push(ParsedValue::Some(combined));
+                Observation::PR { hidden_text, .. } => {
+                    hidden_text.push(ParsedValue::Some(combined));
                 }
-                Observation::CP { hidden_txt, .. } => {
-                    hidden_txt.push(ParsedValue::Some(combined));
+                Observation::CP { hidden_text, .. } => {
+                    hidden_text.push(ParsedValue::Some(combined));
                 }
-                Observation::CU { hidden_txt, .. } => {
-                    hidden_txt.push(ParsedValue::Some(combined));
+                Observation::CU { hidden_text, .. } => {
+                    hidden_text.push(ParsedValue::Some(combined));
                 }
-                Observation::HP { hidden_txt, .. } => {
-                    hidden_txt.push(ParsedValue::Some(combined));
+                Observation::HP { hidden_text, .. } => {
+                    hidden_text.push(ParsedValue::Some(combined));
                 }
-                Observation::PO { hidden_txt, .. } => {
-                    hidden_txt.push(ParsedValue::Some(combined));
+                Observation::PO { hidden_text, .. } => {
+                    hidden_text.push(ParsedValue::Some(combined));
                 }
-                Observation::MW { hidden_txt, .. } => {
-                    hidden_txt.push(ParsedValue::Some(combined));
+                Observation::MW { hidden_text, .. } => {
+                    hidden_text.push(ParsedValue::Some(combined));
                 }
-                Observation::VP { hidden_txt, .. } => {
-                    hidden_txt.push(ParsedValue::Some(combined));
+                Observation::VP { hidden_text, .. } => {
+                    hidden_text.push(ParsedValue::Some(combined));
                 }
-                Observation::VO { hidden_txt, .. } => {
-                    hidden_txt.push(ParsedValue::Some(combined));
+                Observation::VO { hidden_text, .. } => {
+                    hidden_text.push(ParsedValue::Some(combined));
                 }
-                Observation::VK { hidden_txt, .. } => {
-                    hidden_txt.push(ParsedValue::Some(combined));
+                Observation::VK { hidden_text, .. } => {
+                    hidden_text.push(ParsedValue::Some(combined));
                 }
-                Observation::VPK { hidden_txt, .. } => {
-                    hidden_txt.push(ParsedValue::Some(combined));
+                Observation::VPK { hidden_text, .. } => {
+                    hidden_text.push(ParsedValue::Some(combined));
                 }
-                Observation::HV { hidden_txt, .. } => {
-                    hidden_txt.push(ParsedValue::Some(combined));
+                Observation::HV { hidden_text, .. } => {
+                    hidden_text.push(ParsedValue::Some(combined));
                 }
-                Observation::HU { hidden_txt, .. } => {
-                    hidden_txt.push(ParsedValue::Some(combined));
+                Observation::HU { hidden_text, .. } => {
+                    hidden_text.push(ParsedValue::Some(combined));
                 }
-                Observation::PS { hidden_txt, .. } => {
-                    hidden_txt.push(ParsedValue::Some(combined));
+                Observation::PS { hidden_text, .. } => {
+                    hidden_text.push(ParsedValue::Some(combined));
                 }
-                Observation::PM { hidden_txt, .. } => {
-                    hidden_txt.push(ParsedValue::Some(combined));
+                Observation::PM { hidden_text, .. } => {
+                    hidden_text.push(ParsedValue::Some(combined));
                 }
-                Observation::KO { hidden_txt, .. } => {
-                    hidden_txt.push(ParsedValue::Some(combined));
+                Observation::KO { hidden_text, .. } => {
+                    hidden_text.push(ParsedValue::Some(combined));
                 }
-                Observation::KE { hidden_txt, .. } => {
-                    hidden_txt.push(ParsedValue::Some(combined));
+                Observation::KE { hidden_text, .. } => {
+                    hidden_text.push(ParsedValue::Some(combined));
                 }
-                Observation::KR { hidden_txt, .. } => {
-                    hidden_txt.push(ParsedValue::Some(combined));
+                Observation::KR { hidden_text, .. } => {
+                    hidden_text.push(ParsedValue::Some(combined));
                 }
-                Observation::NO { hidden_txt, .. } => {
-                    hidden_txt.push(ParsedValue::Some(combined));
+                Observation::NO { hidden_text, .. } => {
+                    hidden_text.push(ParsedValue::Some(combined));
                 }
-                Observation::NE { hidden_txt, .. } => {
-                    hidden_txt.push(ParsedValue::Some(combined));
+                Observation::NE { hidden_text, .. } => {
+                    hidden_text.push(ParsedValue::Some(combined));
                 }
                 _ => {
                     panic!("No observations available to add hidden text.");
@@ -569,86 +567,167 @@ impl InfraFile {
 
         if let Some(last_obs) = inv.observations.last_mut() {
             match last_obs {
-                Observation::PA { unoff_soil, .. } => {
-                    unoff_soil.push(ParsedValue::Some(combined));
+                Observation::PA {
+                    unofficial_soil_type,
+                    ..
+                } => {
+                    unofficial_soil_type.push(ParsedValue::Some(combined));
                 }
-                Observation::PI { unoff_soil, .. } => {
-                    unoff_soil.push(ParsedValue::Some(combined));
+                Observation::PI {
+                    unofficial_soil_type,
+                    ..
+                } => {
+                    unofficial_soil_type.push(ParsedValue::Some(combined));
                 }
-                Observation::LY { unoff_soil, .. } => {
-                    unoff_soil.push(ParsedValue::Some(combined));
+                Observation::LY {
+                    unofficial_soil_type,
+                    ..
+                } => {
+                    unofficial_soil_type.push(ParsedValue::Some(combined));
                 }
-                Observation::SI { unoff_soil, .. } => {
-                    unoff_soil.push(ParsedValue::Some(combined));
+                Observation::SI {
+                    unofficial_soil_type,
+                    ..
+                } => {
+                    unofficial_soil_type.push(ParsedValue::Some(combined));
                 }
-                Observation::HE { unoff_soil, .. } => {
-                    unoff_soil.push(ParsedValue::Some(combined));
+                Observation::HE {
+                    unofficial_soil_type,
+                    ..
+                } => {
+                    unofficial_soil_type.push(ParsedValue::Some(combined));
                 }
-                Observation::HK { unoff_soil, .. } => {
-                    unoff_soil.push(ParsedValue::Some(combined));
+                Observation::HK {
+                    unofficial_soil_type,
+                    ..
+                } => {
+                    unofficial_soil_type.push(ParsedValue::Some(combined));
                 }
-                Observation::PT { unoff_soil, .. } => {
-                    unoff_soil.push(ParsedValue::Some(combined));
+                Observation::PT {
+                    unofficial_soil_type,
+                    ..
+                } => {
+                    unofficial_soil_type.push(ParsedValue::Some(combined));
                 }
-                Observation::TR { unoff_soil, .. } => {
-                    unoff_soil.push(ParsedValue::Some(combined));
+                Observation::TR {
+                    unofficial_soil_type,
+                    ..
+                } => {
+                    unofficial_soil_type.push(ParsedValue::Some(combined));
                 }
-                Observation::PR { unoff_soil, .. } => {
-                    unoff_soil.push(ParsedValue::Some(combined));
+                Observation::PR {
+                    unofficial_soil_type,
+                    ..
+                } => {
+                    unofficial_soil_type.push(ParsedValue::Some(combined));
                 }
-                Observation::CP { unoff_soil, .. } => {
-                    unoff_soil.push(ParsedValue::Some(combined));
+                Observation::CP {
+                    unofficial_soil_type,
+                    ..
+                } => {
+                    unofficial_soil_type.push(ParsedValue::Some(combined));
                 }
-                Observation::CU { unoff_soil, .. } => {
-                    unoff_soil.push(ParsedValue::Some(combined));
+                Observation::CU {
+                    unofficial_soil_type,
+                    ..
+                } => {
+                    unofficial_soil_type.push(ParsedValue::Some(combined));
                 }
-                Observation::HP { unoff_soil, .. } => {
-                    unoff_soil.push(ParsedValue::Some(combined));
+                Observation::HP {
+                    unofficial_soil_type,
+                    ..
+                } => {
+                    unofficial_soil_type.push(ParsedValue::Some(combined));
                 }
-                Observation::PO { unoff_soil, .. } => {
-                    unoff_soil.push(ParsedValue::Some(combined));
+                Observation::PO {
+                    unofficial_soil_type,
+                    ..
+                } => {
+                    unofficial_soil_type.push(ParsedValue::Some(combined));
                 }
-                Observation::MW { unoff_soil, .. } => {
-                    unoff_soil.push(ParsedValue::Some(combined));
+                Observation::MW {
+                    unofficial_soil_type,
+                    ..
+                } => {
+                    unofficial_soil_type.push(ParsedValue::Some(combined));
                 }
-                Observation::VP { unoff_soil, .. } => {
-                    unoff_soil.push(ParsedValue::Some(combined));
+                Observation::VP {
+                    unofficial_soil_type,
+                    ..
+                } => {
+                    unofficial_soil_type.push(ParsedValue::Some(combined));
                 }
-                Observation::VO { unoff_soil, .. } => {
-                    unoff_soil.push(ParsedValue::Some(combined));
+                Observation::VO {
+                    unofficial_soil_type,
+                    ..
+                } => {
+                    unofficial_soil_type.push(ParsedValue::Some(combined));
                 }
-                Observation::VK { unoff_soil, .. } => {
-                    unoff_soil.push(ParsedValue::Some(combined));
+                Observation::VK {
+                    unofficial_soil_type,
+                    ..
+                } => {
+                    unofficial_soil_type.push(ParsedValue::Some(combined));
                 }
-                Observation::VPK { unoff_soil, .. } => {
-                    unoff_soil.push(ParsedValue::Some(combined));
+                Observation::VPK {
+                    unofficial_soil_type,
+                    ..
+                } => {
+                    unofficial_soil_type.push(ParsedValue::Some(combined));
                 }
-                Observation::HV { unoff_soil, .. } => {
-                    unoff_soil.push(ParsedValue::Some(combined));
+                Observation::HV {
+                    unofficial_soil_type,
+                    ..
+                } => {
+                    unofficial_soil_type.push(ParsedValue::Some(combined));
                 }
-                Observation::HU { unoff_soil, .. } => {
-                    unoff_soil.push(ParsedValue::Some(combined));
+                Observation::HU {
+                    unofficial_soil_type,
+                    ..
+                } => {
+                    unofficial_soil_type.push(ParsedValue::Some(combined));
                 }
-                Observation::PS { unoff_soil, .. } => {
-                    unoff_soil.push(ParsedValue::Some(combined));
+                Observation::PS {
+                    unofficial_soil_type,
+                    ..
+                } => {
+                    unofficial_soil_type.push(ParsedValue::Some(combined));
                 }
-                Observation::PM { unoff_soil, .. } => {
-                    unoff_soil.push(ParsedValue::Some(combined));
+                Observation::PM {
+                    unofficial_soil_type,
+                    ..
+                } => {
+                    unofficial_soil_type.push(ParsedValue::Some(combined));
                 }
-                Observation::KO { unoff_soil, .. } => {
-                    unoff_soil.push(ParsedValue::Some(combined));
+                Observation::KO {
+                    unofficial_soil_type,
+                    ..
+                } => {
+                    unofficial_soil_type.push(ParsedValue::Some(combined));
                 }
-                Observation::KE { unoff_soil, .. } => {
-                    unoff_soil.push(ParsedValue::Some(combined));
+                Observation::KE {
+                    unofficial_soil_type,
+                    ..
+                } => {
+                    unofficial_soil_type.push(ParsedValue::Some(combined));
                 }
-                Observation::KR { unoff_soil, .. } => {
-                    unoff_soil.push(ParsedValue::Some(combined));
+                Observation::KR {
+                    unofficial_soil_type,
+                    ..
+                } => {
+                    unofficial_soil_type.push(ParsedValue::Some(combined));
                 }
-                Observation::NO { unoff_soil, .. } => {
-                    unoff_soil.push(ParsedValue::Some(combined));
+                Observation::NO {
+                    unofficial_soil_type,
+                    ..
+                } => {
+                    unofficial_soil_type.push(ParsedValue::Some(combined));
                 }
-                Observation::NE { unoff_soil, .. } => {
-                    unoff_soil.push(ParsedValue::Some(combined));
+                Observation::NE {
+                    unofficial_soil_type,
+                    ..
+                } => {
+                    unofficial_soil_type.push(ParsedValue::Some(combined));
                 }
                 _ => {
                     panic!("No observations available to add hidden text.");
@@ -724,10 +803,10 @@ impl InfraFile {
             soil_type: Self::parse_value::<String>(params, 3),
 
             notes: vec![],
-            free_txt: vec![],
-            hidden_txt: vec![],
-            unoff_soil: vec![],
-            water_obs: ParsedValue::None,
+            free_text: vec![],
+            hidden_text: vec![],
+            unofficial_soil_type: vec![],
+            water_observed: ParsedValue::None,
         };
 
         inv.observations.push(obs);
@@ -738,10 +817,10 @@ impl InfraFile {
             depth: Self::parse_value::<f32>(params, 0),
             soil_type: Self::parse_value::<String>(params, 1),
             notes: vec![],
-            free_txt: vec![],
-            hidden_txt: vec![],
-            unoff_soil: vec![],
-            water_obs: Default::default(),
+            free_text: vec![],
+            hidden_text: vec![],
+            unofficial_soil_type: vec![],
+            water_observed: Default::default(),
         };
 
         inv.observations.push(obs);
@@ -754,10 +833,10 @@ impl InfraFile {
             hits: Self::parse_value::<i32>(params, 2),
             soil_type: Self::parse_value::<String>(params, 3),
             notes: vec![],
-            free_txt: vec![],
-            hidden_txt: vec![],
-            unoff_soil: vec![],
-            water_obs: Default::default(),
+            free_text: vec![],
+            hidden_text: vec![],
+            unofficial_soil_type: vec![],
+            water_observed: Default::default(),
         };
 
         inv.observations.push(obs);
@@ -771,10 +850,10 @@ impl InfraFile {
             sensitivity: Self::parse_value::<f32>(params, 3),
             residual_str: Self::parse_value::<f32>(params, 4),
             notes: vec![],
-            free_txt: vec![],
-            hidden_txt: vec![],
-            unoff_soil: vec![],
-            water_obs: Default::default(),
+            free_text: vec![],
+            hidden_text: vec![],
+            unofficial_soil_type: vec![],
+            water_observed: Default::default(),
         };
 
         inv.observations.push(obs);
@@ -786,10 +865,10 @@ impl InfraFile {
             hits: Self::parse_value::<i32>(params, 1),
             soil_type: Self::parse_value::<String>(params, 2),
             notes: vec![],
-            free_txt: vec![],
-            hidden_txt: vec![],
-            unoff_soil: vec![],
-            water_obs: Default::default(),
+            free_text: vec![],
+            hidden_text: vec![],
+            unofficial_soil_type: vec![],
+            water_observed: Default::default(),
         };
 
         inv.observations.push(obs);
@@ -802,10 +881,10 @@ impl InfraFile {
             torque: Self::parse_value::<f32>(params, 2),
             soil_type: Self::parse_value::<String>(params, 3),
             notes: vec![],
-            free_txt: vec![],
-            hidden_txt: vec![],
-            unoff_soil: vec![],
-            water_obs: Default::default(),
+            free_text: vec![],
+            hidden_text: vec![],
+            unofficial_soil_type: vec![],
+            water_observed: Default::default(),
         };
 
         inv.observations.push(obs);
@@ -816,10 +895,10 @@ impl InfraFile {
             depth: Self::parse_value::<f32>(params, 0),
             soil_type: Self::parse_value::<String>(params, 1),
             notes: vec![],
-            free_txt: vec![],
-            hidden_txt: vec![],
-            unoff_soil: vec![],
-            water_obs: Default::default(),
+            free_text: vec![],
+            hidden_text: vec![],
+            unofficial_soil_type: vec![],
+            water_observed: Default::default(),
         };
 
         inv.observations.push(obs);
@@ -830,10 +909,10 @@ impl InfraFile {
             depth: Self::parse_value::<f32>(params, 0),
             soil_type: Self::parse_value::<String>(params, 1),
             notes: vec![],
-            free_txt: vec![],
-            hidden_txt: vec![],
-            unoff_soil: vec![],
-            water_obs: Default::default(),
+            free_text: vec![],
+            hidden_text: vec![],
+            unofficial_soil_type: vec![],
+            water_observed: Default::default(),
         };
 
         inv.observations.push(obs);
@@ -846,10 +925,10 @@ impl InfraFile {
             sleeve_friction: Self::parse_value::<f32>(params, 2),
             soil_type: Self::parse_value::<String>(params, 3),
             notes: vec![],
-            free_txt: vec![],
-            hidden_txt: vec![],
-            unoff_soil: vec![],
-            water_obs: Default::default(),
+            free_text: vec![],
+            hidden_text: vec![],
+            unofficial_soil_type: vec![],
+            water_observed: Default::default(),
         };
 
         inv.observations.push(obs);
@@ -863,10 +942,10 @@ impl InfraFile {
             tip_resistance: Self::parse_value::<f32>(params, 3),
             soil_type: Self::parse_value::<String>(params, 4),
             notes: vec![],
-            free_txt: vec![],
-            hidden_txt: vec![],
-            unoff_soil: vec![],
-            water_obs: Default::default(),
+            free_text: vec![],
+            hidden_text: vec![],
+            unofficial_soil_type: vec![],
+            water_observed: Default::default(),
         };
 
         inv.observations.push(obs);
@@ -881,10 +960,10 @@ impl InfraFile {
             pore_water_pressure: Self::parse_value::<f32>(params, 4),
             soil_type: Self::parse_value::<String>(params, 5),
             notes: vec![],
-            free_txt: vec![],
-            hidden_txt: vec![],
-            unoff_soil: vec![],
-            water_obs: Default::default(),
+            free_text: vec![],
+            hidden_text: vec![],
+            unofficial_soil_type: vec![],
+            water_observed: Default::default(),
         };
 
         inv.observations.push(obs);
@@ -908,10 +987,10 @@ impl InfraFile {
                 mode: Self::parse_value::<String>(params, 3),
                 soil_type: Self::parse_value::<String>(params, 4),
                 notes: vec![],
-                free_txt: vec![],
-                hidden_txt: vec![],
-                unoff_soil: vec![],
-                water_obs: false,
+                free_text: vec![],
+                hidden_text: vec![],
+                unofficial_soil_type: vec![],
+                water_observed: false,
             };
 
             inv.observations.push(obs);
@@ -924,10 +1003,10 @@ impl InfraFile {
             time: Self::parse_value::<i32>(params, 1),
             soil_type: Self::parse_value::<String>(params, 2),
             notes: vec![],
-            free_txt: vec![],
-            hidden_txt: vec![],
-            unoff_soil: vec![],
-            water_obs: Default::default(),
+            free_text: vec![],
+            hidden_text: vec![],
+            unofficial_soil_type: vec![],
+            water_observed: Default::default(),
         };
 
         inv.observations.push(obs);
@@ -946,10 +1025,10 @@ impl InfraFile {
             hits: Self::parse_value::<String>(params, 7),
             soil_type: Self::parse_value::<String>(params, 8),
             notes: vec![],
-            free_txt: vec![],
-            hidden_txt: vec![],
-            unoff_soil: vec![],
-            water_obs: Default::default(),
+            free_text: vec![],
+            hidden_text: vec![],
+            unofficial_soil_type: vec![],
+            water_observed: Default::default(),
         };
 
         inv.observations.push(obs);
@@ -964,10 +1043,10 @@ impl InfraFile {
             sieve_len: Self::parse_value::<f32>(params, 4),
             measurer: Self::parse_value::<String>(params, 5),
             notes: vec![],
-            free_txt: vec![],
-            hidden_txt: vec![],
-            unoff_soil: vec![],
-            water_obs: Default::default(),
+            free_text: vec![],
+            hidden_text: vec![],
+            unofficial_soil_type: vec![],
+            water_observed: Default::default(),
         };
 
         inv.observations.push(obs);
@@ -982,10 +1061,10 @@ impl InfraFile {
             sieve_len: Self::parse_value::<f32>(params, 4),
             measurer: Self::parse_value::<String>(params, 5),
             notes: vec![],
-            free_txt: vec![],
-            hidden_txt: vec![],
-            unoff_soil: vec![],
-            water_obs: Default::default(),
+            free_text: vec![],
+            hidden_text: vec![],
+            unofficial_soil_type: vec![],
+            water_observed: Default::default(),
         };
 
         inv.observations.push(obs);
@@ -998,10 +1077,10 @@ impl InfraFile {
             // TODO Implement bool enum here for water type
             water_type: Self::parse_value::<String>(params, 2),
             notes: vec![],
-            free_txt: vec![],
-            hidden_txt: vec![],
-            unoff_soil: vec![],
-            water_obs: Default::default(),
+            free_text: vec![],
+            hidden_text: vec![],
+            unofficial_soil_type: vec![],
+            water_observed: Default::default(),
         };
 
         inv.observations.push(obs);
@@ -1012,10 +1091,10 @@ impl InfraFile {
             surface_elev: Self::parse_value::<f32>(params, 0),
             date: Self::parse_value::<NaiveDate>(params, 1),
             notes: vec![],
-            free_txt: vec![],
-            hidden_txt: vec![],
-            unoff_soil: vec![],
-            water_obs: Default::default(),
+            free_text: vec![],
+            hidden_text: vec![],
+            unofficial_soil_type: vec![],
+            water_observed: Default::default(),
         };
 
         inv.observations.push(obs);
@@ -1028,10 +1107,10 @@ impl InfraFile {
             date: Self::parse_value::<NaiveDate>(params, 2),
             measurer: Self::parse_value::<String>(params, 3),
             notes: vec![],
-            free_txt: vec![],
-            hidden_txt: vec![],
-            unoff_soil: vec![],
-            water_obs: Default::default(),
+            free_text: vec![],
+            hidden_text: vec![],
+            unofficial_soil_type: vec![],
+            water_observed: Default::default(),
         };
 
         inv.observations.push(obs);
@@ -1046,10 +1125,10 @@ impl InfraFile {
             sieve_len: Self::parse_value::<f32>(params, 4),
             measurer: Self::parse_value::<String>(params, 5),
             notes: vec![],
-            free_txt: vec![],
-            hidden_txt: vec![],
-            unoff_soil: vec![],
-            water_obs: Default::default(),
+            free_text: vec![],
+            hidden_text: vec![],
+            unofficial_soil_type: vec![],
+            water_observed: Default::default(),
         };
 
         inv.observations.push(obs);
@@ -1061,10 +1140,10 @@ impl InfraFile {
             modulus: Self::parse_value::<f32>(params, 1),
             fail_pressure: Self::parse_value::<f32>(params, 2),
             notes: vec![],
-            free_txt: vec![],
-            hidden_txt: vec![],
-            unoff_soil: vec![],
-            water_obs: Default::default(),
+            free_text: vec![],
+            hidden_text: vec![],
+            unofficial_soil_type: vec![],
+            water_observed: Default::default(),
         };
 
         inv.observations.push(obs);
@@ -1076,10 +1155,10 @@ impl InfraFile {
             date: Self::parse_value::<NaiveDate>(params, 1),
             measurer: Self::parse_value::<String>(params, 2),
             notes: vec![],
-            free_txt: vec![],
-            hidden_txt: vec![],
-            unoff_soil: vec![],
-            water_obs: Default::default(),
+            free_text: vec![],
+            hidden_text: vec![],
+            unofficial_soil_type: vec![],
+            water_observed: Default::default(),
         };
 
         inv.observations.push(obs);
@@ -1094,10 +1173,10 @@ impl InfraFile {
             max_width: Self::parse_value::<f32>(params, 4),
             min_width: Self::parse_value::<f32>(params, 5),
             notes: vec![],
-            free_txt: vec![],
-            hidden_txt: vec![],
-            unoff_soil: vec![],
-            water_obs: Default::default(),
+            free_text: vec![],
+            hidden_text: vec![],
+            unofficial_soil_type: vec![],
+            water_observed: Default::default(),
         };
 
         inv.observations.push(obs);
@@ -1108,10 +1187,10 @@ impl InfraFile {
             start_depth: Self::parse_value::<f32>(params, 0),
             end_depth: Self::parse_value::<f32>(params, 1),
             notes: vec![],
-            free_txt: vec![],
-            hidden_txt: vec![],
-            unoff_soil: vec![],
-            water_obs: Default::default(),
+            free_text: vec![],
+            hidden_text: vec![],
+            unofficial_soil_type: vec![],
+            water_observed: Default::default(),
         };
 
         inv.observations.push(obs);
@@ -1122,10 +1201,10 @@ impl InfraFile {
             start_depth: Self::parse_value::<f32>(params, 0),
             end_depth: Self::parse_value::<f32>(params, 1),
             notes: vec![],
-            free_txt: vec![],
-            hidden_txt: vec![],
-            unoff_soil: vec![],
-            water_obs: Default::default(),
+            free_text: vec![],
+            hidden_text: vec![],
+            unofficial_soil_type: vec![],
+            water_observed: Default::default(),
         };
 
         inv.observations.push(obs);
@@ -1140,10 +1219,10 @@ impl InfraFile {
             lab_sieve: Vec::new(),
             lab_other: Vec::new(),
             notes: vec![],
-            free_txt: vec![],
-            hidden_txt: vec![],
-            unoff_soil: vec![],
-            water_obs: Default::default(),
+            free_text: vec![],
+            hidden_text: vec![],
+            unofficial_soil_type: vec![],
+            water_observed: Default::default(),
         };
 
         inv.observations.push(obs);
@@ -1158,10 +1237,10 @@ impl InfraFile {
             lab_sieve: Vec::new(),
             lab_other: Vec::new(),
             notes: vec![],
-            free_txt: vec![],
-            hidden_txt: vec![],
-            unoff_soil: vec![],
-            water_obs: Default::default(),
+            free_text: vec![],
+            hidden_text: vec![],
+            unofficial_soil_type: vec![],
+            water_observed: Default::default(),
         };
 
         inv.observations.push(obs);
