@@ -1,0 +1,11 @@
+[package]
+name = "inframodel"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+chardetng = "0.1.17"
+chrono = "0.4.39"
+encoding_rs = "0.8.35"
+regex = "1.11.1"
+lazy_static = "1.5.0"
