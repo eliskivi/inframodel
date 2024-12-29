@@ -1,4 +1,7 @@
-use crate::investigation::{Digitized, Investigation, MethodToken};
+use crate::investigation::{
+    ClassificationName, Digitized, InitialBoreToken, Investigation, MethodToken, Sampler,
+    TerminationToken,
+};
 use crate::observation::Observation;
 use crate::parsed_value::{ParsedValue, TryParse};
 
@@ -35,10 +38,52 @@ pub struct Format {
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
 pub struct Spatial {
-    // TODO: Add common Finnish coordinate and elevation systems into an enum
-    // TODO: Implement Unknown coordinate/elevation system marked with "?"
-    pub coordinate_system: ParsedValue<String>,
-    pub elevation_system: ParsedValue<String>,
+    pub coordinate_system: ParsedValue<CoordinateSystem>,
+    pub elevation_system: ParsedValue<ElevationSystem>,
+}
+
+#[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
+pub enum CoordinateSystem {
+    #[default]
+    Unknown,
+    WGS84,
+    HKI,
+    VANTAA,
+    ESPOO,
+    KKJ0,
+    KKJ1,
+    KKJ2,
+    KKJ3,
+    KKJ4,
+    KKJ5,
+    YKJ,
+    GK19,
+    GK20,
+    GK21,
+    GK22,
+    GK23,
+    GK24,
+    GK25,
+    GK26,
+    GK27,
+    GK28,
+    GK29,
+    GK30,
+    GK31,
+    TM34,
+    TM35,
+    TM36,
+}
+
+#[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
+pub enum ElevationSystem {
+    #[default]
+    Unknown,
+    N2000,
+    N60,
+    N43,
+    NN,
+    LN,
 }
 
 impl InfraFile {
@@ -46,14 +91,13 @@ impl InfraFile {
         Self::default()
     }
 
-    pub fn debug_print(&self) {
-        println!("{:#?}", self);
-    }
-
     // TODO: Implement other building and re-building methods
-    // TODO: Implement Result<InfraFile, error_string>
-    pub fn parse_file(file_path: &str) -> InfraFile {
-        let buffer = std::fs::read(file_path).expect("File not found");
+    pub fn parse_file(file_path: &str) -> Result<InfraFile, String> {
+        let buffer = match std::fs::read(file_path) {
+            Ok(data) => data,
+            Err(e) => return Err(format!("Failed to read file '{}': {}", file_path, e)),
+        };
+
         let mut detector = EncodingDetector::new();
         detector.feed(&buffer, true);
         let encoding = detector.guess(None, true);
@@ -105,7 +149,8 @@ impl InfraFile {
                     "EM" => Self::parse_em(&mut inv, rest),
                     "LB" => Self::parse_lb(&mut inv, rest),
                     "RK" => Self::parse_rk(&mut inv, rest),
-                    _ if FLOAT_RE.is_match(token) => match &inv.investigation_method.token {
+                    // TODO: Implement KK token parsing correctly
+                    _ if FLOAT_RE.is_match(token) => match &inv.method.token {
                         ParsedValue::Some(method) => match method {
                             MethodToken::PA => Self::parse_pa(&mut inv, params),
                             MethodToken::PI => Self::parse_pi(&mut inv, params),
@@ -137,10 +182,10 @@ impl InfraFile {
                             MethodToken::None => unreachable!("Unknown method: {}", token),
                         },
                         ParsedValue::None => {
-                            panic!("No method was specified, got: {}", token);
+                            // panic!("No method was specified, got: {}", token);
                         }
-                        ParsedValue::Fallback(original) => {
-                            panic!("Invalid method: {}", original);
+                        ParsedValue::Fallback(_) => {
+                            // panic!("Invalid method: {}", original);
                         }
                     },
                     _ => {}
@@ -148,7 +193,7 @@ impl InfraFile {
             }
         }
 
-        infra
+        Ok(infra)
     }
 
     fn parse_value<T: TryParse>(params: &[&str], index: usize) -> ParsedValue<T> {
@@ -166,8 +211,8 @@ impl InfraFile {
     }
 
     fn parse_kj(infra: &mut InfraFile, params: &[&str]) {
-        infra.spatial.coordinate_system = Self::parse_value::<String>(params, 0);
-        infra.spatial.elevation_system = Self::parse_value::<String>(params, 1);
+        infra.spatial.coordinate_system = Self::parse_value::<CoordinateSystem>(params, 0);
+        infra.spatial.elevation_system = Self::parse_value::<ElevationSystem>(params, 1);
     }
 
     fn parse_om(inv: &mut Investigation, params: &[&str]) {
@@ -175,7 +220,7 @@ impl InfraFile {
     }
 
     fn parse_ml(inv: &mut Investigation, params: &[&str]) {
-        inv.soil_classification.name = Self::parse_value::<String>(params, 0);
+        inv.classification.name = Self::parse_value::<ClassificationName>(params, 0);
     }
 
     fn parse_or(inv: &mut Investigation, params: &[&str]) {
@@ -197,12 +242,12 @@ impl InfraFile {
     }
 
     fn parse_tt(inv: &mut Investigation, params: &[&str]) {
-        inv.investigation_method.token = Self::parse_value::<MethodToken>(params, 0);
-        inv.investigation_method.category = Self::parse_value::<i32>(params, 1);
-        inv.investigation_method.id = Self::parse_value::<String>(params, 2);
-        inv.investigation_method.standard = Self::parse_value::<String>(params, 3);
-        inv.investigation_method.sampler = Self::parse_value::<String>(params, 4);
-        inv.investigation_method.specifier = Self::parse_value::<String>(params, 5);
+        inv.method.token = Self::parse_value::<MethodToken>(params, 0);
+        inv.method.category = Self::parse_value::<i32>(params, 1);
+        inv.method.id = Self::parse_value::<String>(params, 2);
+        inv.method.standard = Self::parse_value::<String>(params, 3);
+        inv.method.sampler = Self::parse_value::<Sampler>(params, 4);
+        inv.method.specifier = Self::parse_value::<String>(params, 5);
     }
 
     fn parse_la(inv: &mut Investigation, params: &[&str]) {
@@ -226,18 +271,18 @@ impl InfraFile {
     }
 
     fn parse_end(infra: &mut InfraFile, inv: &mut Investigation, params: &[&str]) {
-        inv.termination.token = Self::parse_value::<String>(params, 0);
+        inv.termination.token = Self::parse_value::<TerminationToken>(params, 0);
         infra.investigations.push(std::mem::take(inv));
     }
 
     fn parse_gr(inv: &mut Investigation, params: &[&str]) {
-        inv.investigation_program.name = Self::parse_value::<String>(params, 0);
-        inv.investigation_program.date = Self::parse_value::<NaiveDate>(params, 1);
-        inv.investigation_program.author = Self::parse_value::<String>(params, 2);
+        inv.program.name = Self::parse_value::<String>(params, 0);
+        inv.program.date = Self::parse_value::<NaiveDate>(params, 1);
+        inv.program.author = Self::parse_value::<String>(params, 2);
     }
 
     fn parse_gl(inv: &mut Investigation, params: &[&str]) {
-        inv.investigation_program
+        inv.program
             .guide
             .push(Self::parse_value::<String>(params, 0));
     }
@@ -249,7 +294,7 @@ impl InfraFile {
 
     fn parse_al(inv: &mut Investigation, params: &[&str]) {
         inv.initial_borehole.depth = Self::parse_value::<f32>(params, 0);
-        inv.initial_borehole.method = Self::parse_value::<String>(params, 1);
+        inv.initial_borehole.method = Self::parse_value::<InitialBoreToken>(params, 1);
         inv.initial_borehole.soil_type = Self::parse_value::<String>(params, 2);
     }
 
@@ -366,7 +411,7 @@ impl InfraFile {
                     notes.push(ParsedValue::Some(combined));
                 }
                 _ => {
-                    panic!("No observations available to add hidden text.");
+                    // panic!("No observations available to add hidden text.");
                 }
             }
         }
@@ -461,7 +506,7 @@ impl InfraFile {
                     free_text.push(ParsedValue::Some(combined));
                 }
                 _ => {
-                    panic!("No observations available to add hidden text.");
+                    // panic!("No observations available to add hidden text.");
                 }
             }
         }
@@ -556,7 +601,7 @@ impl InfraFile {
                     hidden_text.push(ParsedValue::Some(combined));
                 }
                 _ => {
-                    panic!("No observations available to add hidden text.");
+                    // panic!("No observations available to add hidden text.");
                 }
             }
         }

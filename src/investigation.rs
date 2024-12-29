@@ -5,15 +5,15 @@ use chrono::NaiveDate;
 #[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
 pub struct Investigation {
     pub organisations: Organisations,
-    pub soil_classification: SoilClassification,
+    pub classification: Classification,
     pub work: Work,
     pub record: Record,
-    pub investigation_method: Method,
+    pub method: Method,
     pub equipment: Equipment,
     pub coordinates: Coordinates,
     pub line: Line,
     pub termination: Termination,
-    pub investigation_program: InvestigationProgram,
+    pub program: Program,
     pub depthless_rock_sample: DepthlessRockSample,
     pub initial_borehole: InitialBorehole,
     pub standpipe: Standpipe,
@@ -32,9 +32,15 @@ pub struct Organisations {
 }
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
-pub struct SoilClassification {
-    // TODO: TODO: Implement GEO and ISO enum; GEO is default
-    pub name: ParsedValue<String>,
+pub struct Classification {
+    pub name: ParsedValue<ClassificationName>,
+}
+
+#[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
+pub enum ClassificationName {
+    #[default]
+    GEO,
+    ISO,
 }
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
@@ -59,9 +65,20 @@ pub struct Method {
     pub category: ParsedValue<i32>,
     pub id: ParsedValue<String>,
     pub standard: ParsedValue<String>,
-    // TODO: Implement common samplers enum (K, L, pmk, R, st50, st60)
-    pub sampler: ParsedValue<String>,
+    pub sampler: ParsedValue<Sampler>,
     pub specifier: ParsedValue<String>,
+}
+
+#[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
+pub enum Sampler {
+    #[default]
+    Unknown,
+    K,
+    L,
+    PMK,
+    R,
+    ST50,
+    ST60,
 }
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
@@ -77,7 +94,6 @@ pub struct Coordinates {
     pub x: ParsedValue<f32>,
     pub y: ParsedValue<f32>,
     pub start_elevation: ParsedValue<f32>,
-    // TODO: Implement "00000000" as unknown date
     pub date: ParsedValue<NaiveDate>,
     pub point_id: ParsedValue<String>,
 }
@@ -91,12 +107,25 @@ pub struct Line {
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
 pub struct Termination {
-    // TODO: Implement a termination type enum of known values
-    pub token: ParsedValue<String>,
+    pub token: ParsedValue<TerminationToken>,
 }
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
-pub struct InvestigationProgram {
+pub enum TerminationToken {
+    #[default]
+    Unknown,
+    TM,
+    KI,
+    KL,
+    KA,
+    KK,
+    MS,
+    KN,
+    JA,
+}
+
+#[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
+pub struct Program {
     pub name: ParsedValue<String>,
     pub date: ParsedValue<NaiveDate>,
     pub author: ParsedValue<String>,
@@ -112,10 +141,21 @@ pub struct DepthlessRockSample {
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
 pub struct InitialBorehole {
-    // TODO: Implement known initial boring methods
     pub depth: ParsedValue<f32>,
-    pub method: ParsedValue<String>,
+    pub method: ParsedValue<InitialBoreToken>,
     pub soil_type: ParsedValue<String>,
+}
+
+#[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
+pub enum InitialBoreToken {
+    #[default]
+    Unknown,
+    SI,
+    LK,
+    AP,
+    LY,
+    VA,
+    JA,
 }
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Default)]

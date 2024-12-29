@@ -3,6 +3,8 @@ use chrono::NaiveDate;
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
 pub enum Observation {
+    // TODO: Implement accepted soil type enum
+    // TODO: Ever further, if it's not on that enum, then that should be unofficial soil type..
     #[default]
     None,
     PA {
