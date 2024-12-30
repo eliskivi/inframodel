@@ -3,6 +3,8 @@ use crate::investigation::{
 };
 use crate::observation::{LabResult, Observation, ObservationValues};
 use crate::parsed_value::{ParsedValue, TryParse};
+use std::collections::HashMap;
+use std::fmt;
 
 use chardetng::EncodingDetector;
 use chrono::NaiveDate;
@@ -13,7 +15,7 @@ lazy_static! {
     pub static ref FLOAT_RE: Regex = Regex::new(r"^[+-]?[0-9]+([.,][0-9]+)?$").unwrap();
 }
 
-#[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
+#[derive(Clone, PartialEq, Debug, Default)]
 pub struct InfraFile {
     pub file: File,
     pub format: Format,
@@ -23,9 +25,9 @@ pub struct InfraFile {
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
 pub struct File {
-    pub path: ParsedValue<String>,
-    pub encoding: ParsedValue<String>,
-    pub text: ParsedValue<String>,
+    pub path: Option<String>,
+    pub encoding: Option<String>,
+    pub text: Option<String>,
 }
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
@@ -35,13 +37,13 @@ pub struct Format {
     pub software_version: ParsedValue<String>,
 }
 
-#[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug, Default)]
 pub struct Spatial {
     pub coordinate_system: ParsedValue<CoordinateSystem>,
     pub elevation_system: ParsedValue<ElevationSystem>,
 }
 
-#[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug, Default)]
 pub enum CoordinateSystem {
     #[default]
     Unknown,
@@ -74,7 +76,7 @@ pub enum CoordinateSystem {
     TM36,
 }
 
-#[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug, Default)]
 pub enum ElevationSystem {
     #[default]
     Unknown,
@@ -88,6 +90,16 @@ pub enum ElevationSystem {
 impl InfraFile {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn count_investigations(&self) -> HashMap<MethodToken, usize> {
+        let mut counts = HashMap::new();
+        for investigation in &self.investigations {
+            if let ParsedValue::Some(token) = investigation.method.token {
+                *counts.entry(token).or_insert(0) += 1;
+            }
+        }
+        counts
     }
 
     // TODO: Implement other building and re-building methods
@@ -107,9 +119,9 @@ impl InfraFile {
 
         let mut infra = InfraFile {
             file: File {
-                path: ParsedValue::Some(file_path.to_string()),
-                encoding: ParsedValue::Some(encoding.name().to_string()),
-                text: ParsedValue::Some(decoded.parse().unwrap()),
+                path: Some(file_path.to_string()),
+                encoding: Some(encoding.name().to_string()),
+                text: Some(decoded.parse().unwrap()),
             },
             ..Default::default()
         };
@@ -193,7 +205,15 @@ impl InfraFile {
             }
         }
 
+        Self::compute_properties(&mut infra);
         Ok(infra)
+    }
+
+    fn compute_properties(infra: &mut InfraFile) {
+        for investigation in &mut infra.investigations {
+            investigation.spatial = infra.spatial.clone();
+            investigation.compute_properties();
+        }
     }
 
     fn parse_value<T: TryParse>(params: &[&str], index: usize) -> ParsedValue<T> {
@@ -821,5 +841,112 @@ impl InfraFile {
         };
 
         inv.observations.push(obs);
+    }
+}
+
+impl fmt::Display for CoordinateSystem {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let cs_str = match self {
+            CoordinateSystem::Unknown => "Unknown",
+            CoordinateSystem::WGS84 => "WGS84",
+            CoordinateSystem::HKI => "HKI",
+            CoordinateSystem::VANTAA => "VANTAA",
+            CoordinateSystem::ESPOO => "ESPOO",
+            CoordinateSystem::KKJ0 => "KKJ0",
+            CoordinateSystem::KKJ1 => "KKJ1",
+            CoordinateSystem::KKJ2 => "KKJ2",
+            CoordinateSystem::KKJ3 => "KKJ3",
+            CoordinateSystem::KKJ4 => "KKJ4",
+            CoordinateSystem::KKJ5 => "KKJ5",
+            CoordinateSystem::YKJ => "YKJ",
+            CoordinateSystem::GK19 => "ETRS-GK19",
+            CoordinateSystem::GK20 => "ETRS-GK20",
+            CoordinateSystem::GK21 => "ETRS-GK21",
+            CoordinateSystem::GK22 => "ETRS-GK22",
+            CoordinateSystem::GK23 => "ETRS-GK23",
+            CoordinateSystem::GK24 => "ETRS-GK24",
+            CoordinateSystem::GK25 => "ETRS-GK25",
+            CoordinateSystem::GK26 => "ETRS-GK26",
+            CoordinateSystem::GK27 => "ETRS-GK27",
+            CoordinateSystem::GK28 => "ETRS-GK28",
+            CoordinateSystem::GK29 => "ETRS-GK29",
+            CoordinateSystem::GK30 => "ETRS-GK30",
+            CoordinateSystem::GK31 => "ETRS-GK31",
+            CoordinateSystem::TM34 => "ETRS-TM34",
+            CoordinateSystem::TM35 => "ETRS-TM35",
+            CoordinateSystem::TM36 => "ETRS-TM36",
+        };
+        write!(f, "{}", cs_str)
+    }
+}
+
+impl fmt::Display for ElevationSystem {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let es_str = match self {
+            ElevationSystem::Unknown => "Unknown",
+            ElevationSystem::N2000 => "N2000",
+            ElevationSystem::N60 => "N60",
+            ElevationSystem::N43 => "N43",
+            ElevationSystem::NN => "NN",
+            ElevationSystem::LN => "LN",
+        };
+        write!(f, "{}", es_str)
+    }
+}
+
+impl fmt::Display for InfraFile {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "----------------------------------------------------------------")?;
+        writeln!(f, "  INFRA FILE")?;
+        writeln!(f, "----------------------------------------------------------------")?;
+        if let Some(ref path) = self.file.path {
+            writeln!(f, "File path: {}", path)?;
+        }
+        if let Some(ref encoding) = self.file.encoding {
+            writeln!(f, "File encoding: {}", encoding)?;
+        }
+        // if let Some(ref text) = self.file.text {
+        //     writeln!(f, "Decoded file text: {}", text)?;
+        // }
+
+        if let ParsedValue::Some(ref version) = self.format.version {
+            writeln!(f, "Format version: {}", version)?;
+        } else if let ParsedValue::Fallback(ref version) = self.format.version {
+            writeln!(f, "Format version: {} (fallback)", version)?;
+        }
+        if let ParsedValue::Some(ref used_software) = self.format.used_software {
+            writeln!(f, "Software used: {}", used_software)?;
+        } else if let ParsedValue::Fallback(ref used_software) = self.format.used_software {
+            writeln!(f, "Software used: {} (fallback)", used_software)?;
+        }
+        if let ParsedValue::Some(ref software_version) = self.format.software_version {
+            writeln!(f, "Software version: {}", software_version)?;
+        } else if let ParsedValue::Fallback(ref software_version) = self.format.software_version {
+            writeln!(f, "Software version: {} (fallback)", software_version)?;
+        }
+
+        // Handle Spatial Fields (ParsedValue<Enum>)
+        if let ParsedValue::Some(ref coord_sys) = self.spatial.coordinate_system {
+            writeln!(f, "Coordinate system: {}", coord_sys)?;
+        } else if let ParsedValue::Fallback(ref coord_sys) = self.spatial.coordinate_system {
+            writeln!(f, "Coordinate system: {} (fallback)", coord_sys)?;
+        }
+
+        if let ParsedValue::Some(ref elev_sys) = self.spatial.elevation_system {
+            writeln!(f, "Elevation system: {}", elev_sys)?;
+        } else if let ParsedValue::Fallback(ref elev_sys) = self.spatial.elevation_system {
+            writeln!(f, "Elevation system: {} (fallback)", elev_sys)?;
+        }
+
+        if !self.investigations.is_empty() {
+            for (i, investigation) in self.investigations.iter().enumerate() {
+                writeln!(f, "----------------------------------------------------------------")?;
+                writeln!(f, "  INVESTIGATION {}:", i + 1)?;
+                writeln!(f, "----------------------------------------------------------------")?;
+                writeln!(f, "{}", investigation)?;
+            }
+        }
+
+        Ok(())
     }
 }

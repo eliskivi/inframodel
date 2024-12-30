@@ -16,8 +16,12 @@ pub use parsed_value::ParsedValue;
 mod tests {
     #[test]
     fn parser_test() {
-        let file_path = "C:/PT/1.txt";
+        let file_path = "C:/PT/3.txt";
         let tek = crate::InfraFile::parse_file(file_path);
-        println!("{:#?}", tek);
+        if let Ok(tek) = tek {
+            //println!("{}", tek);
+            let x = tek.count_investigations();
+            println!("{:#?}", x);
+        };
     }
 }
