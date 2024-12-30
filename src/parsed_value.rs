@@ -109,7 +109,7 @@ impl TryParse for ElevationSystem {
 impl TryParse for ClassificationName {
     fn try_parse(input: &str) -> Result<Self, String> {
         match input.trim().to_uppercase().as_str() {
-            // TODO: Thinking if default should just be GEO..
+            // TODO: Default should just be GEO.. ?
             "GEO" => Ok(ClassificationName::GEO),
             "ISO" => Ok(ClassificationName::ISO),
             _ => Err(input.to_string()),

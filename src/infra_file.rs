@@ -1,5 +1,5 @@
 use crate::investigation::{ClassificationName, Digitized, InitialBoreToken, Investigation, MethodToken, Sampler, TerminationToken};
-use crate::observation::Observation;
+use crate::observation::{LabType, Observation, ObservationValues};
 use crate::parsed_value::{ParsedValue, TryParse};
 
 use chardetng::EncodingDetector;
@@ -89,6 +89,7 @@ impl InfraFile {
     }
 
     // TODO: Implement other building and re-building methods
+
     pub fn parse_file(file_path: &str) -> Result<InfraFile, String> {
         let buffer = match std::fs::read(file_path) {
             Ok(data) => data,
@@ -320,41 +321,12 @@ impl InfraFile {
     fn parse_hm(inv: &mut Investigation, params: &[&str]) {
         let combined = params.join(" ");
 
-        match inv.observations.last_mut() {
-            Some(
-                Observation::PA { notes, .. }
-                | Observation::PI { notes, .. }
-                | Observation::LY { notes, .. }
-                | Observation::SI { notes, .. }
-                | Observation::HE { notes, .. }
-                | Observation::HK { notes, .. }
-                | Observation::PT { notes, .. }
-                | Observation::TR { notes, .. }
-                | Observation::PR { notes, .. }
-                | Observation::CP { notes, .. }
-                | Observation::CU { notes, .. }
-                | Observation::HP { notes, .. }
-                | Observation::PO { notes, .. }
-                | Observation::MW { notes, .. }
-                | Observation::VP { notes, .. }
-                | Observation::VO { notes, .. }
-                | Observation::VK { notes, .. }
-                | Observation::VPK { notes, .. }
-                | Observation::HV { notes, .. }
-                | Observation::HU { notes, .. }
-                | Observation::PS { notes, .. }
-                | Observation::PM { notes, .. }
-                | Observation::KO { notes, .. }
-                | Observation::KE { notes, .. }
-                | Observation::KR { notes, .. }
-                | Observation::NO { notes, .. }
-                | Observation::NE { notes, .. },
-            ) => {
-                notes.push(ParsedValue::Some(combined));
+        match inv.obs_holder.last_mut() {
+            Some(last_obs) => {
+                last_obs.notes.push(ParsedValue::Some(combined));
             }
-            Some(_) => {}
             None => {
-                inv.free_text.push(ParsedValue::Some(combined));
+                inv.notes.push(ParsedValue::Some(combined));
             }
         }
     }
@@ -362,39 +334,10 @@ impl InfraFile {
     fn parse_tx(inv: &mut Investigation, params: &[&str]) {
         let combined = params.join(" ");
 
-        match inv.observations.last_mut() {
-            Some(
-                Observation::PA { free_text, .. }
-                | Observation::PI { free_text, .. }
-                | Observation::LY { free_text, .. }
-                | Observation::SI { free_text, .. }
-                | Observation::HE { free_text, .. }
-                | Observation::HK { free_text, .. }
-                | Observation::PT { free_text, .. }
-                | Observation::TR { free_text, .. }
-                | Observation::PR { free_text, .. }
-                | Observation::CP { free_text, .. }
-                | Observation::CU { free_text, .. }
-                | Observation::HP { free_text, .. }
-                | Observation::PO { free_text, .. }
-                | Observation::MW { free_text, .. }
-                | Observation::VP { free_text, .. }
-                | Observation::VO { free_text, .. }
-                | Observation::VK { free_text, .. }
-                | Observation::VPK { free_text, .. }
-                | Observation::HV { free_text, .. }
-                | Observation::HU { free_text, .. }
-                | Observation::PS { free_text, .. }
-                | Observation::PM { free_text, .. }
-                | Observation::KO { free_text, .. }
-                | Observation::KE { free_text, .. }
-                | Observation::KR { free_text, .. }
-                | Observation::NO { free_text, .. }
-                | Observation::NE { free_text, .. },
-            ) => {
-                free_text.push(ParsedValue::Some(combined));
+        match inv.obs_holder.last_mut() {
+            Some(last_obs) => {
+                last_obs.free_text.push(ParsedValue::Some(combined));
             }
-            Some(_) => {}
             None => {
                 inv.free_text.push(ParsedValue::Some(combined));
             }
@@ -404,41 +347,12 @@ impl InfraFile {
     fn parse_ht(inv: &mut Investigation, params: &[&str]) {
         let combined = params.join(" ");
 
-        match inv.observations.last_mut() {
-            Some(
-                Observation::PA { hidden_text, .. }
-                | Observation::PI { hidden_text, .. }
-                | Observation::LY { hidden_text, .. }
-                | Observation::SI { hidden_text, .. }
-                | Observation::HE { hidden_text, .. }
-                | Observation::HK { hidden_text, .. }
-                | Observation::PT { hidden_text, .. }
-                | Observation::TR { hidden_text, .. }
-                | Observation::PR { hidden_text, .. }
-                | Observation::CP { hidden_text, .. }
-                | Observation::CU { hidden_text, .. }
-                | Observation::HP { hidden_text, .. }
-                | Observation::PO { hidden_text, .. }
-                | Observation::MW { hidden_text, .. }
-                | Observation::VP { hidden_text, .. }
-                | Observation::VO { hidden_text, .. }
-                | Observation::VK { hidden_text, .. }
-                | Observation::VPK { hidden_text, .. }
-                | Observation::HV { hidden_text, .. }
-                | Observation::HU { hidden_text, .. }
-                | Observation::PS { hidden_text, .. }
-                | Observation::PM { hidden_text, .. }
-                | Observation::KO { hidden_text, .. }
-                | Observation::KE { hidden_text, .. }
-                | Observation::KR { hidden_text, .. }
-                | Observation::NO { hidden_text, .. }
-                | Observation::NE { hidden_text, .. },
-            ) => {
-                hidden_text.push(ParsedValue::Some(combined));
+        match inv.obs_holder.last_mut() {
+            Some(last_obs) => {
+                last_obs.hidden_text.push(ParsedValue::Some(combined));
             }
-            Some(_) => {}
             None => {
-                inv.free_text.push(ParsedValue::Some(combined));
+                inv.hidden_text.push(ParsedValue::Some(combined));
             }
         }
     }
@@ -446,87 +360,56 @@ impl InfraFile {
     fn parse_em(inv: &mut Investigation, params: &[&str]) {
         let combined = params.join(" ");
 
-        match inv.observations.last_mut() {
-            Some(
-                Observation::PA { unofficial_soil_type, .. }
-                | Observation::PI { unofficial_soil_type, .. }
-                | Observation::LY { unofficial_soil_type, .. }
-                | Observation::SI { unofficial_soil_type, .. }
-                | Observation::HE { unofficial_soil_type, .. }
-                | Observation::HK { unofficial_soil_type, .. }
-                | Observation::PT { unofficial_soil_type, .. }
-                | Observation::TR { unofficial_soil_type, .. }
-                | Observation::PR { unofficial_soil_type, .. }
-                | Observation::CP { unofficial_soil_type, .. }
-                | Observation::CU { unofficial_soil_type, .. }
-                | Observation::HP { unofficial_soil_type, .. }
-                | Observation::PO { unofficial_soil_type, .. }
-                | Observation::MW { unofficial_soil_type, .. }
-                | Observation::VP { unofficial_soil_type, .. }
-                | Observation::VO { unofficial_soil_type, .. }
-                | Observation::VK { unofficial_soil_type, .. }
-                | Observation::VPK { unofficial_soil_type, .. }
-                | Observation::HV { unofficial_soil_type, .. }
-                | Observation::HU { unofficial_soil_type, .. }
-                | Observation::PS { unofficial_soil_type, .. }
-                | Observation::PM { unofficial_soil_type, .. }
-                | Observation::KO { unofficial_soil_type, .. }
-                | Observation::KE { unofficial_soil_type, .. }
-                | Observation::KR { unofficial_soil_type, .. }
-                | Observation::NO { unofficial_soil_type, .. }
-                | Observation::NE { unofficial_soil_type, .. },
-            ) => {
-                unofficial_soil_type.push(ParsedValue::Some(combined));
-            }
-            Some(_) => {}
-            None => {}
+        if let Some(last_obs) = inv.obs_holder.last_mut() {
+            last_obs.unofficial_soil_type.push(ParsedValue::Some(combined));
         }
     }
 
     fn parse_lb(inv: &mut Investigation, params: &[&str]) {
-        let lb_value = Observation::LB {
+        // TODO: Implement common lab types
+        let lab_other = LabType::Other {
             attribute: Self::parse_value::<String>(params, 0),
             result: Self::parse_value::<String>(params, 1),
             unit: Self::parse_value::<String>(params, 2),
         };
 
-        if let Some(last_obs) = inv.observations.last_mut() {
-            match last_obs {
-                Observation::NO { lab_other, .. } => {
-                    lab_other.push(ParsedValue::Some(lb_value));
+        if let Some(last_obs) = inv.obs_holder.last_mut() {
+            match &mut last_obs.values {
+                ObservationValues::NO { lab_values, .. } => {
+                    lab_values.push(ParsedValue::Some(lab_other));
                 }
-                Observation::NE { lab_other, .. } => {
-                    lab_other.push(ParsedValue::Some(lb_value));
+                ObservationValues::NE { lab_values, .. } => {
+                    lab_values.push(ParsedValue::Some(lab_other));
                 }
                 _ => {
-                    panic!("Cannot add LB value to a non-NO/NE observation");
+                    // panic!("Cannot add RK value to a non-NO/NE observation");
                 }
             }
         } else {
-            panic!("No observation in the list to store LB value");
+            // panic!("No observation in the list to store LB value");
         }
     }
 
     fn parse_rk(inv: &mut Investigation, params: &[&str]) {
-        let lb_value = Observation::RK {
-            sieve_mm: Self::parse_value::<f32>(params, 0),
+        let lab_sieve = LabType::GrainSize {
+            grain_mm: Self::parse_value::<f32>(params, 0),
             pass_percent: Self::parse_value::<f32>(params, 1),
         };
 
-        if let Some(last_obs) = inv.observations.last_mut() {
-            match last_obs {
-                Observation::NO { lab_sieve, .. } => {
-                    lab_sieve.push(ParsedValue::Some(lb_value));
+        if let Some(last_obs) = inv.obs_holder.last_mut() {
+            match &mut last_obs.values {
+                ObservationValues::NO { lab_values, .. } => {
+                    lab_values.push(ParsedValue::Some(lab_sieve));
                 }
-                Observation::NE { lab_sieve, .. } => {
-                    lab_sieve.push(ParsedValue::Some(lb_value));
+                ObservationValues::NE { lab_values, .. } => {
+                    lab_values.push(ParsedValue::Some(lab_sieve));
                 }
                 _ => {
-                    panic!("Cannot add RK value to a non-NO/NE observation");
+                    // panic!("Cannot add RK value to a non-NO/NE observation");
                 }
             }
         } else {
-            panic!("No observation in the list to store LB value");
+            // panic!("No observation in the list to store LB value");
         }
     }
 
@@ -542,178 +425,155 @@ impl InfraFile {
             }
         }
 
-        let obs = Observation::PA {
-            depth: Self::parse_value::<f32>(params, 0),
-            load,
-            half_turns: Self::parse_value::<i32>(params, 2),
-            hits,
-            soil_type: Self::parse_value::<String>(params, 3),
-
-            notes: vec![],
-            free_text: vec![],
-            hidden_text: vec![],
-            unofficial_soil_type: vec![],
-            water_observed: ParsedValue::None,
+        let obs = Observation {
+            values: ObservationValues::PA {
+                depth: Self::parse_value::<f32>(params, 0),
+                load,
+                half_turns: Self::parse_value::<i32>(params, 2),
+                hits,
+                soil_type: Self::parse_value::<String>(params, 3),
+            },
+            ..Default::default()
         };
 
-        inv.observations.push(obs);
+        inv.obs_holder.push(obs);
     }
 
     fn parse_pi(inv: &mut Investigation, params: &[&str]) {
-        let obs = Observation::PI {
-            depth: Self::parse_value::<f32>(params, 0),
-            soil_type: Self::parse_value::<String>(params, 1),
-            notes: vec![],
-            free_text: vec![],
-            hidden_text: vec![],
-            unofficial_soil_type: vec![],
-            water_observed: Default::default(),
+        let obs = Observation {
+            values: ObservationValues::PI {
+                depth: Self::parse_value::<f32>(params, 0),
+                soil_type: Self::parse_value::<String>(params, 1),
+            },
+            ..Default::default()
         };
 
-        inv.observations.push(obs);
+        inv.obs_holder.push(obs);
     }
 
     fn parse_ly(inv: &mut Investigation, params: &[&str]) {
-        let obs = Observation::LY {
-            depth: Self::parse_value::<f32>(params, 0),
-            load: Self::parse_value::<f32>(params, 1),
-            hits: Self::parse_value::<i32>(params, 2),
-            soil_type: Self::parse_value::<String>(params, 3),
-            notes: vec![],
-            free_text: vec![],
-            hidden_text: vec![],
-            unofficial_soil_type: vec![],
-            water_observed: Default::default(),
+        let obs = Observation {
+            values: ObservationValues::LY {
+                depth: Self::parse_value::<f32>(params, 0),
+                load: Self::parse_value::<f32>(params, 1),
+                hits: Self::parse_value::<i32>(params, 2),
+                soil_type: Self::parse_value::<String>(params, 3),
+            },
+            ..Default::default()
         };
 
-        inv.observations.push(obs);
+        inv.obs_holder.push(obs);
     }
 
     fn parse_si(inv: &mut Investigation, params: &[&str]) {
-        let obs = Observation::SI {
-            depth: Self::parse_value::<f32>(params, 0),
-            shear_str: Self::parse_value::<f32>(params, 1),
-            disturb_shear_str: Self::parse_value::<f32>(params, 2),
-            sensitivity: Self::parse_value::<f32>(params, 3),
-            residual_str: Self::parse_value::<f32>(params, 4),
-            notes: vec![],
-            free_text: vec![],
-            hidden_text: vec![],
-            unofficial_soil_type: vec![],
-            water_observed: Default::default(),
+        let obs = Observation {
+            values: ObservationValues::SI {
+                depth: Self::parse_value::<f32>(params, 0),
+                shear_str: Self::parse_value::<f32>(params, 1),
+                disturb_shear_str: Self::parse_value::<f32>(params, 2),
+                sensitivity: Self::parse_value::<f32>(params, 3),
+                residual_str: Self::parse_value::<f32>(params, 4),
+            },
+            ..Default::default()
         };
 
-        inv.observations.push(obs);
+        inv.obs_holder.push(obs);
     }
 
     fn parse_he(inv: &mut Investigation, params: &[&str]) {
-        let obs = Observation::HE {
-            depth: Self::parse_value::<f32>(params, 0),
-            hits: Self::parse_value::<i32>(params, 1),
-            soil_type: Self::parse_value::<String>(params, 2),
-            notes: vec![],
-            free_text: vec![],
-            hidden_text: vec![],
-            unofficial_soil_type: vec![],
-            water_observed: Default::default(),
+        let obs = Observation {
+            values: ObservationValues::HE {
+                depth: Self::parse_value::<f32>(params, 0),
+                hits: Self::parse_value::<i32>(params, 1),
+                soil_type: Self::parse_value::<String>(params, 2),
+            },
+            ..Default::default()
         };
 
-        inv.observations.push(obs);
+        inv.obs_holder.push(obs);
     }
 
     fn parse_hk(inv: &mut Investigation, params: &[&str]) {
-        let obs = Observation::HK {
-            depth: Self::parse_value::<f32>(params, 0),
-            hits: Self::parse_value::<i32>(params, 1),
-            torque: Self::parse_value::<f32>(params, 2),
-            soil_type: Self::parse_value::<String>(params, 3),
-            notes: vec![],
-            free_text: vec![],
-            hidden_text: vec![],
-            unofficial_soil_type: vec![],
-            water_observed: Default::default(),
+        let obs = Observation {
+            values: ObservationValues::HK {
+                depth: Self::parse_value::<f32>(params, 0),
+                hits: Self::parse_value::<i32>(params, 1),
+                torque: Self::parse_value::<f32>(params, 2),
+                soil_type: Self::parse_value::<String>(params, 3),
+            },
+            ..Default::default()
         };
 
-        inv.observations.push(obs);
+        inv.obs_holder.push(obs);
     }
 
     fn parse_pt(inv: &mut Investigation, params: &[&str]) {
-        let obs = Observation::PT {
-            depth: Self::parse_value::<f32>(params, 0),
-            soil_type: Self::parse_value::<String>(params, 1),
-            notes: vec![],
-            free_text: vec![],
-            hidden_text: vec![],
-            unofficial_soil_type: vec![],
-            water_observed: Default::default(),
+        let obs = Observation {
+            values: ObservationValues::PT {
+                depth: Self::parse_value::<f32>(params, 0),
+                soil_type: Self::parse_value::<String>(params, 1),
+            },
+            ..Default::default()
         };
 
-        inv.observations.push(obs);
+        inv.obs_holder.push(obs);
     }
 
     fn parse_tr(inv: &mut Investigation, params: &[&str]) {
-        let obs = Observation::TR {
-            depth: Self::parse_value::<f32>(params, 0),
-            soil_type: Self::parse_value::<String>(params, 1),
-            notes: vec![],
-            free_text: vec![],
-            hidden_text: vec![],
-            unofficial_soil_type: vec![],
-            water_observed: Default::default(),
+        let obs = Observation {
+            values: ObservationValues::TR {
+                depth: Self::parse_value::<f32>(params, 0),
+                soil_type: Self::parse_value::<String>(params, 1),
+            },
+            ..Default::default()
         };
 
-        inv.observations.push(obs);
+        inv.obs_holder.push(obs);
     }
 
     fn parse_pr(inv: &mut Investigation, params: &[&str]) {
-        let obs = Observation::PR {
-            depth: Self::parse_value::<f32>(params, 0),
-            total_resistance: Self::parse_value::<f32>(params, 1),
-            sleeve_friction: Self::parse_value::<f32>(params, 2),
-            soil_type: Self::parse_value::<String>(params, 3),
-            notes: vec![],
-            free_text: vec![],
-            hidden_text: vec![],
-            unofficial_soil_type: vec![],
-            water_observed: Default::default(),
+        let obs = Observation {
+            values: ObservationValues::PR {
+                depth: Self::parse_value::<f32>(params, 0),
+                total_resistance: Self::parse_value::<f32>(params, 1),
+                sleeve_friction: Self::parse_value::<f32>(params, 2),
+                soil_type: Self::parse_value::<String>(params, 3),
+            },
+            ..Default::default()
         };
 
-        inv.observations.push(obs);
+        inv.obs_holder.push(obs);
     }
 
     fn parse_cp(inv: &mut Investigation, params: &[&str]) {
-        let obs = Observation::CP {
-            depth: Self::parse_value::<f32>(params, 0),
-            total_resistance: Self::parse_value::<f32>(params, 1),
-            sleeve_friction: Self::parse_value::<f32>(params, 2),
-            tip_resistance: Self::parse_value::<f32>(params, 3),
-            soil_type: Self::parse_value::<String>(params, 4),
-            notes: vec![],
-            free_text: vec![],
-            hidden_text: vec![],
-            unofficial_soil_type: vec![],
-            water_observed: Default::default(),
+        let obs = Observation {
+            values: ObservationValues::CP {
+                depth: Self::parse_value::<f32>(params, 0),
+                total_resistance: Self::parse_value::<f32>(params, 1),
+                sleeve_friction: Self::parse_value::<f32>(params, 2),
+                tip_resistance: Self::parse_value::<f32>(params, 3),
+                soil_type: Self::parse_value::<String>(params, 4),
+            },
+            ..Default::default()
         };
 
-        inv.observations.push(obs);
+        inv.obs_holder.push(obs);
     }
 
     fn parse_cu(inv: &mut Investigation, params: &[&str]) {
-        let obs = Observation::CU {
-            depth: Self::parse_value::<f32>(params, 0),
-            total_resistance: Self::parse_value::<f32>(params, 1),
-            sleeve_friction: Self::parse_value::<f32>(params, 2),
-            tip_resistance: Self::parse_value::<f32>(params, 3),
-            pore_water_pressure: Self::parse_value::<f32>(params, 4),
-            soil_type: Self::parse_value::<String>(params, 5),
-            notes: vec![],
-            free_text: vec![],
-            hidden_text: vec![],
-            unofficial_soil_type: vec![],
-            water_observed: Default::default(),
+        let obs = Observation {
+            values: ObservationValues::CU {
+                depth: Self::parse_value::<f32>(params, 0),
+                total_resistance: Self::parse_value::<f32>(params, 1),
+                sleeve_friction: Self::parse_value::<f32>(params, 2),
+                tip_resistance: Self::parse_value::<f32>(params, 3),
+                pore_water_pressure: Self::parse_value::<f32>(params, 4),
+                soil_type: Self::parse_value::<String>(params, 5),
+            },
+            ..Default::default()
         };
 
-        inv.observations.push(obs);
+        inv.obs_holder.push(obs);
     }
 
     fn parse_hp(inv: &mut Investigation, params: &[&str]) {
@@ -726,270 +586,238 @@ impl InfraFile {
                 "P" => pressure = Self::parse_value::<f32>(params, 1),
                 _ => {}
             }
-            let obs = Observation::HP {
-                depth: Self::parse_value::<f32>(params, 0),
-                hits,
-                pressure,
-                torque: Self::parse_value::<f32>(params, 2),
-                mode: Self::parse_value::<String>(params, 3),
-                soil_type: Self::parse_value::<String>(params, 4),
-                notes: vec![],
-                free_text: vec![],
-                hidden_text: vec![],
-                unofficial_soil_type: vec![],
-                water_observed: false,
+
+            let obs = Observation {
+                values: ObservationValues::HP {
+                    depth: Self::parse_value::<f32>(params, 0),
+                    hits,
+                    pressure,
+                    torque: Self::parse_value::<f32>(params, 2),
+                    // TODO: Implement enum holding the mode
+                    mode: Self::parse_value::<String>(params, 3),
+                    soil_type: Self::parse_value::<String>(params, 4),
+                },
+                ..Default::default()
             };
 
-            inv.observations.push(obs);
+            inv.obs_holder.push(obs);
         }
     }
 
     fn parse_po(inv: &mut Investigation, params: &[&str]) {
-        let obs = Observation::PO {
-            depth: Self::parse_value::<f32>(params, 0),
-            time: Self::parse_value::<i32>(params, 1),
-            soil_type: Self::parse_value::<String>(params, 2),
-            notes: vec![],
-            free_text: vec![],
-            hidden_text: vec![],
-            unofficial_soil_type: vec![],
-            water_observed: Default::default(),
+        let obs = Observation {
+            values: ObservationValues::PO {
+                depth: Self::parse_value::<f32>(params, 0),
+                time: Self::parse_value::<i32>(params, 1),
+                soil_type: Self::parse_value::<String>(params, 2),
+            },
+            ..Default::default()
         };
 
-        inv.observations.push(obs);
+        inv.obs_holder.push(obs);
     }
 
     fn parse_mw(inv: &mut Investigation, params: &[&str]) {
-        let obs = Observation::MW {
-            depth: Self::parse_value::<f32>(params, 0),
-            advance_rate: Self::parse_value::<f32>(params, 1),
-            compressive_force: Self::parse_value::<f32>(params, 2),
-            flushing_pressure: Self::parse_value::<f32>(params, 3),
-            water_consumption: Self::parse_value::<f32>(params, 4),
-            torque: Self::parse_value::<f32>(params, 5),
-            rotation_speed: Self::parse_value::<f32>(params, 6),
-            // TODO Implement hits here / bool value
-            hits: Self::parse_value::<String>(params, 7),
-            soil_type: Self::parse_value::<String>(params, 8),
-            notes: vec![],
-            free_text: vec![],
-            hidden_text: vec![],
-            unofficial_soil_type: vec![],
-            water_observed: Default::default(),
+        let obs = Observation {
+            values: ObservationValues::MW {
+                depth: Self::parse_value::<f32>(params, 0),
+                advance_rate: Self::parse_value::<f32>(params, 1),
+                compressive_force: Self::parse_value::<f32>(params, 2),
+                flushing_pressure: Self::parse_value::<f32>(params, 3),
+                water_consumption: Self::parse_value::<f32>(params, 4),
+                torque: Self::parse_value::<f32>(params, 5),
+                rotation_speed: Self::parse_value::<f32>(params, 6),
+                // TODO Implement hits here / bool value
+                hits: Self::parse_value::<String>(params, 7),
+                soil_type: Self::parse_value::<String>(params, 8),
+            },
+            ..Default::default()
         };
 
-        inv.observations.push(obs);
+        inv.obs_holder.push(obs);
     }
 
     fn parse_vp(inv: &mut Investigation, params: &[&str]) {
-        let obs = Observation::VP {
-            surface_elev: Self::parse_value::<f32>(params, 0),
-            date: Self::parse_value::<NaiveDate>(params, 1),
-            pipe_top_elev: Self::parse_value::<f32>(params, 2),
-            pipe_bot_elev: Self::parse_value::<f32>(params, 3),
-            sieve_len: Self::parse_value::<f32>(params, 4),
-            measurer: Self::parse_value::<String>(params, 5),
-            notes: vec![],
-            free_text: vec![],
-            hidden_text: vec![],
-            unofficial_soil_type: vec![],
-            water_observed: Default::default(),
+        let obs = Observation {
+            values: ObservationValues::VP {
+                surface_elev: Self::parse_value::<f32>(params, 0),
+                date: Self::parse_value::<NaiveDate>(params, 1),
+                pipe_top_elev: Self::parse_value::<f32>(params, 2),
+                pipe_bot_elev: Self::parse_value::<f32>(params, 3),
+                sieve_len: Self::parse_value::<f32>(params, 4),
+                measurer: Self::parse_value::<String>(params, 5),
+            },
+            ..Default::default()
         };
 
-        inv.observations.push(obs);
+        inv.obs_holder.push(obs);
     }
 
     fn parse_vo(inv: &mut Investigation, params: &[&str]) {
-        let obs = Observation::VO {
-            surface_elev: Self::parse_value::<f32>(params, 0),
-            date: Self::parse_value::<NaiveDate>(params, 1),
-            pipe_top_elev: Self::parse_value::<f32>(params, 2),
-            pipe_bot_elev: Self::parse_value::<f32>(params, 3),
-            sieve_len: Self::parse_value::<f32>(params, 4),
-            measurer: Self::parse_value::<String>(params, 5),
-            notes: vec![],
-            free_text: vec![],
-            hidden_text: vec![],
-            unofficial_soil_type: vec![],
-            water_observed: Default::default(),
+        let obs = Observation {
+            values: ObservationValues::VO {
+                surface_elev: Self::parse_value::<f32>(params, 0),
+                date: Self::parse_value::<NaiveDate>(params, 1),
+                pipe_top_elev: Self::parse_value::<f32>(params, 2),
+                pipe_bot_elev: Self::parse_value::<f32>(params, 3),
+                sieve_len: Self::parse_value::<f32>(params, 4),
+                measurer: Self::parse_value::<String>(params, 5),
+            },
+            ..Default::default()
         };
 
-        inv.observations.push(obs);
+        inv.obs_holder.push(obs);
     }
 
     fn parse_vk(inv: &mut Investigation, params: &[&str]) {
-        let obs = Observation::VK {
-            surface_elev: Self::parse_value::<f32>(params, 0),
-            date: Self::parse_value::<NaiveDate>(params, 1),
-            // TODO Implement bool enum here for water type
-            water_type: Self::parse_value::<String>(params, 2),
-            notes: vec![],
-            free_text: vec![],
-            hidden_text: vec![],
-            unofficial_soil_type: vec![],
-            water_observed: Default::default(),
+        let obs = Observation {
+            values: ObservationValues::VK {
+                surface_elev: Self::parse_value::<f32>(params, 0),
+                date: Self::parse_value::<NaiveDate>(params, 1),
+                // TODO Implement bool enum here for water type
+                water_type: Self::parse_value::<String>(params, 2),
+            },
+            ..Default::default()
         };
 
-        inv.observations.push(obs);
+        inv.obs_holder.push(obs);
     }
 
     fn parse_vpk(inv: &mut Investigation, params: &[&str]) {
-        let obs = Observation::VPK {
-            surface_elev: Self::parse_value::<f32>(params, 0),
-            date: Self::parse_value::<NaiveDate>(params, 1),
-            notes: vec![],
-            free_text: vec![],
-            hidden_text: vec![],
-            unofficial_soil_type: vec![],
-            water_observed: Default::default(),
+        let obs = Observation {
+            values: ObservationValues::VPK {
+                surface_elev: Self::parse_value::<f32>(params, 0),
+                date: Self::parse_value::<NaiveDate>(params, 1),
+            },
+            ..Default::default()
         };
 
-        inv.observations.push(obs);
+        inv.obs_holder.push(obs);
     }
 
     fn parse_hv(inv: &mut Investigation, params: &[&str]) {
-        let obs = Observation::HV {
-            depth: Self::parse_value::<f32>(params, 0),
-            pressure: Self::parse_value::<f32>(params, 1),
-            date: Self::parse_value::<NaiveDate>(params, 2),
-            measurer: Self::parse_value::<String>(params, 3),
-            notes: vec![],
-            free_text: vec![],
-            hidden_text: vec![],
-            unofficial_soil_type: vec![],
-            water_observed: Default::default(),
+        let obs = Observation {
+            values: ObservationValues::HV {
+                depth: Self::parse_value::<f32>(params, 0),
+                pressure: Self::parse_value::<f32>(params, 1),
+                date: Self::parse_value::<NaiveDate>(params, 2),
+                measurer: Self::parse_value::<String>(params, 3),
+            },
+            ..Default::default()
         };
 
-        inv.observations.push(obs);
+        inv.obs_holder.push(obs);
     }
 
     fn parse_hu(inv: &mut Investigation, params: &[&str]) {
-        let obs = Observation::HU {
-            surface_elev: Self::parse_value::<f32>(params, 0),
-            date: Self::parse_value::<NaiveDate>(params, 1),
-            pipe_top_elev: Self::parse_value::<f32>(params, 2),
-            pipe_bot_elev: Self::parse_value::<f32>(params, 3),
-            sieve_len: Self::parse_value::<f32>(params, 4),
-            measurer: Self::parse_value::<String>(params, 5),
-            notes: vec![],
-            free_text: vec![],
-            hidden_text: vec![],
-            unofficial_soil_type: vec![],
-            water_observed: Default::default(),
+        let obs = Observation {
+            values: ObservationValues::HU {
+                surface_elev: Self::parse_value::<f32>(params, 0),
+                date: Self::parse_value::<NaiveDate>(params, 1),
+                pipe_top_elev: Self::parse_value::<f32>(params, 2),
+                pipe_bot_elev: Self::parse_value::<f32>(params, 3),
+                sieve_len: Self::parse_value::<f32>(params, 4),
+                measurer: Self::parse_value::<String>(params, 5),
+            },
+            ..Default::default()
         };
 
-        inv.observations.push(obs);
+        inv.obs_holder.push(obs);
     }
 
     fn parse_ps(inv: &mut Investigation, params: &[&str]) {
-        let obs = Observation::PS {
-            depth: Self::parse_value::<f32>(params, 0),
-            modulus: Self::parse_value::<f32>(params, 1),
-            fail_pressure: Self::parse_value::<f32>(params, 2),
-            notes: vec![],
-            free_text: vec![],
-            hidden_text: vec![],
-            unofficial_soil_type: vec![],
-            water_observed: Default::default(),
+        let obs = Observation {
+            values: ObservationValues::PS {
+                depth: Self::parse_value::<f32>(params, 0),
+                modulus: Self::parse_value::<f32>(params, 1),
+                fail_pressure: Self::parse_value::<f32>(params, 2),
+            },
+            ..Default::default()
         };
 
-        inv.observations.push(obs);
+        inv.obs_holder.push(obs);
     }
 
     fn parse_pm(inv: &mut Investigation, params: &[&str]) {
-        let obs = Observation::PM {
-            elev: Self::parse_value::<f32>(params, 0),
-            date: Self::parse_value::<NaiveDate>(params, 1),
-            measurer: Self::parse_value::<String>(params, 2),
-            notes: vec![],
-            free_text: vec![],
-            hidden_text: vec![],
-            unofficial_soil_type: vec![],
-            water_observed: Default::default(),
+        let obs = Observation {
+            values: ObservationValues::PM {
+                elev: Self::parse_value::<f32>(params, 0),
+                date: Self::parse_value::<NaiveDate>(params, 1),
+                measurer: Self::parse_value::<String>(params, 2),
+            },
+            ..Default::default()
         };
 
-        inv.observations.push(obs);
+        inv.obs_holder.push(obs);
     }
 
     fn parse_ko(inv: &mut Investigation, params: &[&str]) {
-        let obs = Observation::KO {
-            depth: Self::parse_value::<f32>(params, 0),
-            soil_type: Self::parse_value::<String>(params, 1),
-            stones: Self::parse_value::<f32>(params, 2),
-            boulders: Self::parse_value::<i32>(params, 3),
-            max_width: Self::parse_value::<f32>(params, 4),
-            min_width: Self::parse_value::<f32>(params, 5),
-            notes: vec![],
-            free_text: vec![],
-            hidden_text: vec![],
-            unofficial_soil_type: vec![],
-            water_observed: Default::default(),
+        let obs = Observation {
+            values: ObservationValues::KO {
+                depth: Self::parse_value::<f32>(params, 0),
+                soil_type: Self::parse_value::<String>(params, 1),
+                stones: Self::parse_value::<f32>(params, 2),
+                boulders: Self::parse_value::<i32>(params, 3),
+                max_width: Self::parse_value::<f32>(params, 4),
+                min_width: Self::parse_value::<f32>(params, 5),
+            },
+            ..Default::default()
         };
 
-        inv.observations.push(obs);
+        inv.obs_holder.push(obs);
     }
 
     fn parse_ke(inv: &mut Investigation, params: &[&str]) {
-        let obs = Observation::KE {
-            start_depth: Self::parse_value::<f32>(params, 0),
-            end_depth: Self::parse_value::<f32>(params, 1),
-            notes: vec![],
-            free_text: vec![],
-            hidden_text: vec![],
-            unofficial_soil_type: vec![],
-            water_observed: Default::default(),
+        let obs = Observation {
+            values: ObservationValues::KE {
+                start_depth: Self::parse_value::<f32>(params, 0),
+                end_depth: Self::parse_value::<f32>(params, 1),
+            },
+            ..Default::default()
         };
 
-        inv.observations.push(obs);
+        inv.obs_holder.push(obs);
     }
 
     fn parse_kr(inv: &mut Investigation, params: &[&str]) {
-        let obs = Observation::KR {
-            start_depth: Self::parse_value::<f32>(params, 0),
-            end_depth: Self::parse_value::<f32>(params, 1),
-            notes: vec![],
-            free_text: vec![],
-            hidden_text: vec![],
-            unofficial_soil_type: vec![],
-            water_observed: Default::default(),
+        let obs = Observation {
+            values: ObservationValues::KR {
+                start_depth: Self::parse_value::<f32>(params, 0),
+                end_depth: Self::parse_value::<f32>(params, 1),
+            },
+            ..Default::default()
         };
 
-        inv.observations.push(obs);
+        inv.obs_holder.push(obs);
     }
 
     fn parse_no(inv: &mut Investigation, params: &[&str]) {
-        let obs = Observation::NO {
-            start_depth: Self::parse_value::<f32>(params, 0),
-            sample_id: Self::parse_value::<String>(params, 1),
-            end_depth: Self::parse_value::<f32>(params, 2),
-            soil_type: Self::parse_value::<String>(params, 3),
-            lab_sieve: Vec::new(),
-            lab_other: Vec::new(),
-            notes: vec![],
-            free_text: vec![],
-            hidden_text: vec![],
-            unofficial_soil_type: vec![],
-            water_observed: Default::default(),
+        let obs = Observation {
+            values: ObservationValues::NO {
+                start_depth: Self::parse_value::<f32>(params, 0),
+                sample_id: Self::parse_value::<String>(params, 1),
+                end_depth: Self::parse_value::<f32>(params, 2),
+                soil_type: Self::parse_value::<String>(params, 3),
+                lab_values: Vec::new(),
+            },
+            ..Default::default()
         };
 
-        inv.observations.push(obs);
+        inv.obs_holder.push(obs);
     }
 
     fn parse_ne(inv: &mut Investigation, params: &[&str]) {
-        let obs = Observation::NE {
-            start_depth: Self::parse_value::<f32>(params, 0),
-            sample_id: Self::parse_value::<String>(params, 1),
-            end_depth: Self::parse_value::<f32>(params, 2),
-            soil_type: Self::parse_value::<String>(params, 3),
-            lab_sieve: Vec::new(),
-            lab_other: Vec::new(),
-            notes: vec![],
-            free_text: vec![],
-            hidden_text: vec![],
-            unofficial_soil_type: vec![],
-            water_observed: Default::default(),
+        let obs = Observation {
+            values: ObservationValues::NE {
+                start_depth: Self::parse_value::<f32>(params, 0),
+                sample_id: Self::parse_value::<String>(params, 1),
+                end_depth: Self::parse_value::<f32>(params, 2),
+                soil_type: Self::parse_value::<String>(params, 3),
+                lab_values: Vec::new(),
+            },
+            ..Default::default()
         };
 
-        inv.observations.push(obs);
+        inv.obs_holder.push(obs);
     }
 }
