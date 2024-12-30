@@ -13,11 +13,11 @@ pub(crate) mod termination;
 pub(crate) mod work;
 
 use crate::{
-    Classification, Coordinates, DepthlessRockSample, Equipment, InitialBorehole, Line, Method, Observation,
-    Organisations, ParsedValue, Program, Record, Spatial, Standpipe, Termination, Work,
+    Classification, Coordinates, DepthlessRockSample, Equipment,
+    InitialBorehole, Line, Method, Observation, ObservationValues,
+    Organisations, ParseResult, Program, Record, Spatial, Standpipe,
+    Termination, Work,
 };
-
-use std::fmt;
 
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct Investigation {
@@ -35,13 +35,20 @@ pub struct Investigation {
     pub depthless_rock_sample: DepthlessRockSample,
     pub initial_borehole: InitialBorehole,
     pub standpipe: Standpipe,
-    pub notes: Vec<ParsedValue<String>>,
-    pub free_text: Vec<ParsedValue<String>>,
-    pub hidden_text: Vec<ParsedValue<String>>,
+    pub notes: Vec<ParseResult<String>>,
+    pub free_text: Vec<ParseResult<String>>,
+    pub hidden_text: Vec<ParseResult<String>>,
     pub observations: Vec<Observation>,
     // Computed and additional properties
     pub spatial: Spatial,
     pub total_depth: Option<f32>,
+    pub soil_layers: Vec<SoilLayer>,
+}
+
+#[derive(Clone, PartialEq, Debug, Default)]
+pub struct SoilLayer {
+    pub soil_type: String,
+    pub thickness: f32,
 }
 
 impl Investigation {
@@ -50,131 +57,111 @@ impl Investigation {
     }
 
     pub(crate) fn compute_properties(&mut self) {
-        //for observation in &mut self.observations {
-        // TODO: calculate total depth
-        // TODO: calculate all soil layer thicknesses
-        // TODO: update observations to include missing soils
-        //}
+        self.add_missing_soil_types();
+        self.calculate_total_depth();
+        self.calculate_soil_layer_thicknesses();
     }
-}
 
-impl fmt::Display for Investigation {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.organisations != Organisations::default() {
-            writeln!(f, "{}", self.organisations)?;
-        }
+    pub fn add_missing_soil_types(&mut self) {
+        let mut last_soil_type: Option<String> = None;
 
-        if self.classification != Classification::default() {
-            writeln!(f, "{}", self.classification)?;
-        }
-
-        // Work
-        if self.work != Work::default() {
-            writeln!(f, "{}", self.work)?;
-        }
-
-        // Record
-        if self.record != Record::default() {
-            writeln!(f, "{}", self.record)?;
-        }
-
-        // Method
-        if self.method != Method::default() {
-            writeln!(f, "{}", self.method)?;
-        }
-
-        // Equipment
-        if self.equipment != Equipment::default() {
-            writeln!(f, "{}", self.equipment)?;
-        }
-
-        // Coordinates
-        if self.coordinates != Coordinates::default() {
-            writeln!(f, "{}", self.coordinates)?;
-        }
-
-        // Line
-        if self.line != Line::default() {
-            writeln!(f, "{}", self.line)?;
-        }
-
-        // Termination
-        if self.termination != Termination::default() {
-            writeln!(f, "{}", self.termination)?;
-        }
-
-        // Program
-        if self.program != Program::default() {
-            writeln!(f, "{}", self.program)?;
-        }
-
-        // InitialBorehole
-        if self.initial_borehole != InitialBorehole::default() {
-            writeln!(f, "{}", self.initial_borehole)?;
-        }
-
-        // Standpipe
-        if self.standpipe != Standpipe::default() {
-            writeln!(f, "Standpipe:")?;
-            writeln!(f, "{}", self.standpipe)?;
-        }
-
-        // DepthlessRockSample
-        if self.depthless_rock_sample != DepthlessRockSample::default() {
-            writeln!(f, "Depthless rock sample:")?;
-            writeln!(f, "{}", self.depthless_rock_sample)?;
-        }
-
-        // Notes
-        if !self.notes.is_empty() {
-            writeln!(f, "Notes:")?;
-            for (i, note) in self.notes.iter().enumerate() {
-                if let Some(ref note_str) = note.format_display() {
-                    writeln!(f, "  {}. {}", i + 1, note_str)?;
-                }
+        for observation in &mut self.observations {
+            match &mut observation.values {
+                ObservationValues::PA { soil_type, .. }
+                | ObservationValues::PI { soil_type, .. }
+                | ObservationValues::LY { soil_type, .. }
+                | ObservationValues::HE { soil_type, .. }
+                | ObservationValues::HK { soil_type, .. }
+                | ObservationValues::PT { soil_type, .. }
+                | ObservationValues::TR { soil_type, .. }
+                | ObservationValues::PR { soil_type, .. }
+                | ObservationValues::CP { soil_type, .. }
+                | ObservationValues::CU { soil_type, .. }
+                | ObservationValues::HP { soil_type, .. }
+                | ObservationValues::PO { soil_type, .. }
+                | ObservationValues::MW { soil_type, .. }
+                | ObservationValues::KO { soil_type, .. } => {
+                    if let ParseResult::Parsed(ref soil) = soil_type {
+                        last_soil_type = Some(soil.clone());
+                    } else if let Some(ref soil) = last_soil_type {
+                        *soil_type = ParseResult::Parsed(soil.clone());
+                    }
+                },
+                _ => {},
             }
         }
+    }
 
-        // Free Text
-        if !self.free_text.is_empty() {
-            writeln!(f, "Free Text:")?;
-            for (i, text) in self.free_text.iter().enumerate() {
-                if let Some(ref text_str) = text.format_display() {
-                    writeln!(f, "  {}. {}", i + 1, text_str)?;
+    fn calculate_total_depth(&mut self) {
+        self.total_depth =
+            self.observations.last().and_then(|last_observation| {
+                let depth_result = match &last_observation.values {
+                    ObservationValues::PA { depth, .. }
+                    | ObservationValues::PI { depth, .. }
+                    | ObservationValues::LY { depth, .. }
+                    | ObservationValues::SI { depth, .. }
+                    | ObservationValues::HE { depth, .. }
+                    | ObservationValues::HK { depth, .. }
+                    | ObservationValues::PT { depth, .. }
+                    | ObservationValues::TR { depth, .. }
+                    | ObservationValues::PR { depth, .. }
+                    | ObservationValues::CP { depth, .. }
+                    | ObservationValues::CU { depth, .. }
+                    | ObservationValues::HP { depth, .. }
+                    | ObservationValues::PO { depth, .. }
+                    | ObservationValues::MW { depth, .. }
+                    | ObservationValues::HV { depth, .. }
+                    | ObservationValues::KO { depth, .. }
+                    | ObservationValues::PS { depth, .. } => depth,
+                    _ => return None,
+                };
+
+                match depth_result {
+                    ParseResult::Parsed(x) => Some(*x),
+                    _ => None,
                 }
+            });
+    }
+
+    pub fn calculate_soil_layer_thicknesses(&mut self) {
+        let mut merged_layers: Vec<SoilLayer> = Vec::new();
+        let mut previous_depth = 0.0;
+
+        for observation in &self.observations {
+            let current_depth = match observation.values.get_parsed_depth() {
+                Some(d) => d,
+                None => continue,
+            };
+
+            let soil_type = match observation.values.get_parsed_soil_type() {
+                Some(s) => s.clone(),
+                None => continue,
+            };
+
+            let thickness = current_depth - previous_depth;
+
+            if thickness < 0.0 {
+                continue;
             }
+
+            let new_layer = SoilLayer {
+                soil_type: soil_type.clone(),
+                thickness,
+            };
+
+            if let Some(last_layer) = merged_layers.last_mut() {
+                if last_layer.soil_type == new_layer.soil_type {
+                    last_layer.thickness += new_layer.thickness;
+                } else {
+                    merged_layers.push(new_layer);
+                }
+            } else {
+                merged_layers.push(new_layer);
+            }
+
+            previous_depth = current_depth;
         }
 
-        // Hidden Text
-        if !self.hidden_text.is_empty() {
-            writeln!(f, "Hidden Text:")?;
-            for (i, text) in self.hidden_text.iter().enumerate() {
-                if let Some(ref text_str) = text.format_display() {
-                    writeln!(f, "  {}. {}", i + 1, text_str)?;
-                }
-            }
-        }
-
-        // Observations
-        // if !self.observations.is_empty() {
-        //     writeln!(f, "Observations:")?;
-        //     for (i, observation) in self.observations.iter().enumerate() {
-        //         writeln!(f, "  Observation {}:", i + 1)?;
-        //         writeln!(f, "    {}", observation)?;
-        //     }
-        // }
-
-        // Spatial
-        // if self.spatial != Spatial::default() {
-        //    writeln!(f, "Spatial:")?;
-        //    writeln!(f, "{}", self.spatial)?;
-        //}
-
-        // Total Depth
-        //if let Some(ref depth) = self.total_depth {
-        //    writeln!(f, "Total Depth: {}", depth)?;
-        //}
-
-        Ok(())
+        self.soil_layers = merged_layers;
     }
 }

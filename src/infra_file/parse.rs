@@ -1,6 +1,8 @@
 use crate::{
-    ClassificationName, CoordinateSystem, Digitized, ElevationSystem, File, InfraFile, InitialBoreToken, Investigation,
-    LabResult, MethodToken, Observation, ObservationValues, ParsedValue, Sampler, TerminationToken, TryParse,
+    ClassificationName, CoordinateSystem, Digitized, ElevationSystem, FileInfo,
+    InfraFile, InitialBoreToken, Investigation, LabResult, MethodToken,
+    Observation, ObservationValues, ParseResult, Sampler, TerminationToken,
+    TryParse,
 };
 
 use chardetng::EncodingDetector;
@@ -9,14 +11,20 @@ use lazy_static::lazy_static;
 use regex::Regex;
 
 lazy_static! {
-    pub static ref FLOAT_RE: Regex = Regex::new(r"^[+-]?[0-9]+([.,][0-9]+)?$").unwrap();
+    pub static ref FLOAT_RE: Regex =
+        Regex::new(r"^[+-]?[0-9]+([.,][0-9]+)?$").unwrap();
 }
 
 impl InfraFile {
     pub fn parse_file(file_path: &str) -> Result<InfraFile, String> {
         let buffer = match std::fs::read(file_path) {
             Ok(data) => data,
-            Err(e) => return Err(format!("Failed to read file '{}': {}", file_path, e)),
+            Err(e) => {
+                return Err(format!(
+                    "Failed to read file '{}': {}",
+                    file_path, e
+                ))
+            },
         };
 
         let mut detector = EncodingDetector::new();
@@ -27,7 +35,7 @@ impl InfraFile {
         let lines: Vec<&str> = decoded.lines().collect();
 
         let mut infra = InfraFile {
-            file: File {
+            file: FileInfo {
                 path: Some(file_path.to_string()),
                 encoding: Some(encoding.name().to_string()),
                 text: Some(decoded.parse().unwrap()),
@@ -42,7 +50,8 @@ impl InfraFile {
                 continue;
             }
 
-            let params: &[&str] = &line.split_whitespace().collect::<Vec<&str>>();
+            let params: &[&str] =
+                &line.split_whitespace().collect::<Vec<&str>>();
             if let Some((token, rest)) = params.split_first() {
                 match *token {
                     "FO" => Self::parse_fo(&mut infra, rest),
@@ -72,7 +81,7 @@ impl InfraFile {
                     "RK" => Self::parse_rk(&mut inv, rest),
                     // TODO: Implement KK token parsing correctly
                     _ if FLOAT_RE.is_match(token) => match &inv.method.token {
-                        ParsedValue::Some(method) => match method {
+                        ParseResult::Parsed(method) => match method {
                             MethodToken::PA => Self::parse_pa(&mut inv, params),
                             MethodToken::PI => Self::parse_pi(&mut inv, params),
                             MethodToken::LY => Self::parse_ly(&mut inv, params),
@@ -90,7 +99,9 @@ impl InfraFile {
                             MethodToken::VP => Self::parse_vp(&mut inv, params),
                             MethodToken::VO => Self::parse_vo(&mut inv, params),
                             MethodToken::VK => Self::parse_vk(&mut inv, params),
-                            MethodToken::VPK => Self::parse_vpk(&mut inv, params),
+                            MethodToken::VPK => {
+                                Self::parse_vpk(&mut inv, params)
+                            },
                             MethodToken::HV => Self::parse_hv(&mut inv, params),
                             MethodToken::HU => Self::parse_hu(&mut inv, params),
                             MethodToken::PS => Self::parse_ps(&mut inv, params),
@@ -100,16 +111,18 @@ impl InfraFile {
                             MethodToken::KR => Self::parse_kr(&mut inv, params),
                             MethodToken::NO => Self::parse_no(&mut inv, params),
                             MethodToken::NE => Self::parse_ne(&mut inv, params),
-                            MethodToken::None => unreachable!("Unknown method: {}", token),
+                            MethodToken::None => {
+                                unreachable!("Unknown method: {}", token)
+                            },
                         },
-                        ParsedValue::None => {
+                        ParseResult::None => {
                             // panic!("No method was specified, got: {}", token);
-                        }
-                        ParsedValue::Fallback(_) => {
+                        },
+                        ParseResult::Fallback(_) => {
                             // panic!("Invalid method: {}", original);
-                        }
+                        },
                     },
-                    _ => {}
+                    _ => {},
                 }
             }
         }
@@ -125,11 +138,14 @@ impl InfraFile {
         }
     }
 
-    fn parse_value<T: TryParse>(params: &[&str], index: usize) -> ParsedValue<T> {
+    fn parse_value<T: TryParse>(
+        params: &[&str],
+        index: usize,
+    ) -> ParseResult<T> {
         if let Some(&raw) = params.get(index) {
-            ParsedValue::parse(raw)
+            ParseResult::parse(raw)
         } else {
-            ParsedValue::None
+            ParseResult::None
         }
     }
 
@@ -140,8 +156,10 @@ impl InfraFile {
     }
 
     fn parse_kj(infra: &mut InfraFile, params: &[&str]) {
-        infra.spatial.coordinate_system = Self::parse_value::<CoordinateSystem>(params, 0);
-        infra.spatial.elevation_system = Self::parse_value::<ElevationSystem>(params, 1);
+        infra.spatial.coordinate_system =
+            Self::parse_value::<CoordinateSystem>(params, 0);
+        infra.spatial.elevation_system =
+            Self::parse_value::<ElevationSystem>(params, 1);
     }
 
     fn parse_om(inv: &mut Investigation, params: &[&str]) {
@@ -149,11 +167,13 @@ impl InfraFile {
     }
 
     fn parse_ml(inv: &mut Investigation, params: &[&str]) {
-        inv.classification.name = Self::parse_value::<ClassificationName>(params, 0);
+        inv.classification.name =
+            Self::parse_value::<ClassificationName>(params, 0);
     }
 
     fn parse_or(inv: &mut Investigation, params: &[&str]) {
-        inv.organisations.investigator_name = Self::parse_value::<String>(params, 0);
+        inv.organisations.investigator_name =
+            Self::parse_value::<String>(params, 0);
     }
 
     fn parse_ty(inv: &mut Investigation, params: &[&str]) {
@@ -199,8 +219,13 @@ impl InfraFile {
         inv.line.distance = Self::parse_value::<f32>(params, 2);
     }
 
-    fn parse_end(infra: &mut InfraFile, inv: &mut Investigation, params: &[&str]) {
-        inv.termination.token = Self::parse_value::<TerminationToken>(params, 0);
+    fn parse_end(
+        infra: &mut InfraFile,
+        inv: &mut Investigation,
+        params: &[&str],
+    ) {
+        inv.termination.token =
+            Self::parse_value::<TerminationToken>(params, 0);
         infra.investigations.push(std::mem::take(inv));
     }
 
@@ -211,26 +236,33 @@ impl InfraFile {
     }
 
     fn parse_gl(inv: &mut Investigation, params: &[&str]) {
-        inv.program.guide.push(Self::parse_value::<String>(params, 0));
+        inv.program
+            .guide
+            .push(Self::parse_value::<String>(params, 0));
     }
 
     fn parse_at(inv: &mut Investigation, params: &[&str]) {
-        inv.depthless_rock_sample.attribute = Self::parse_value::<String>(params, 0);
-        inv.depthless_rock_sample.value = Self::parse_value::<String>(params, 1);
+        inv.depthless_rock_sample.attribute =
+            Self::parse_value::<String>(params, 0);
+        inv.depthless_rock_sample.value =
+            Self::parse_value::<String>(params, 1);
     }
 
     fn parse_al(inv: &mut Investigation, params: &[&str]) {
         inv.initial_borehole.depth = Self::parse_value::<f32>(params, 0);
-        inv.initial_borehole.method = Self::parse_value::<InitialBoreToken>(params, 1);
+        inv.initial_borehole.method =
+            Self::parse_value::<InitialBoreToken>(params, 1);
         inv.initial_borehole.soil_type = Self::parse_value::<String>(params, 2);
     }
 
     fn parse_zp(inv: &mut Investigation, params: &[&str]) {
         inv.standpipe.top_elevation = Self::parse_value::<f32>(params, 0);
         inv.standpipe.ground_elevation = Self::parse_value::<f32>(params, 1);
-        inv.standpipe.protection_top_elevation = Self::parse_value::<f32>(params, 2);
+        inv.standpipe.protection_top_elevation =
+            Self::parse_value::<f32>(params, 2);
         inv.standpipe.cover_elevation = Self::parse_value::<f32>(params, 3);
-        inv.standpipe.sieve_bottom_elevation = Self::parse_value::<f32>(params, 4);
+        inv.standpipe.sieve_bottom_elevation =
+            Self::parse_value::<f32>(params, 4);
     }
 
     fn parse_tp(inv: &mut Investigation, params: &[&str]) {
@@ -254,11 +286,11 @@ impl InfraFile {
 
         match inv.observations.last_mut() {
             Some(last_obs) => {
-                last_obs.notes.push(ParsedValue::Some(combined));
-            }
+                last_obs.notes.push(ParseResult::Parsed(combined));
+            },
             None => {
-                inv.notes.push(ParsedValue::Some(combined));
-            }
+                inv.notes.push(ParseResult::Parsed(combined));
+            },
         }
     }
 
@@ -267,11 +299,11 @@ impl InfraFile {
 
         match inv.observations.last_mut() {
             Some(last_obs) => {
-                last_obs.free_text.push(ParsedValue::Some(combined));
-            }
+                last_obs.free_text.push(ParseResult::Parsed(combined));
+            },
             None => {
-                inv.free_text.push(ParsedValue::Some(combined));
-            }
+                inv.free_text.push(ParseResult::Parsed(combined));
+            },
         }
     }
 
@@ -280,11 +312,11 @@ impl InfraFile {
 
         match inv.observations.last_mut() {
             Some(last_obs) => {
-                last_obs.hidden_text.push(ParsedValue::Some(combined));
-            }
+                last_obs.hidden_text.push(ParseResult::Parsed(combined));
+            },
             None => {
-                inv.hidden_text.push(ParsedValue::Some(combined));
-            }
+                inv.hidden_text.push(ParseResult::Parsed(combined));
+            },
         }
     }
 
@@ -292,7 +324,9 @@ impl InfraFile {
         let combined = params.join(" ");
 
         if let Some(last_obs) = inv.observations.last_mut() {
-            last_obs.unofficial_soil_type.push(ParsedValue::Some(combined));
+            last_obs
+                .unofficial_soil_type
+                .push(ParseResult::Parsed(combined));
         }
     }
 
@@ -307,14 +341,14 @@ impl InfraFile {
         if let Some(last_obs) = inv.observations.last_mut() {
             match &mut last_obs.values {
                 ObservationValues::NO { lab_values, .. } => {
-                    lab_values.push(ParsedValue::Some(lab_other));
-                }
+                    lab_values.push(ParseResult::Parsed(lab_other));
+                },
                 ObservationValues::NE { lab_values, .. } => {
-                    lab_values.push(ParsedValue::Some(lab_other));
-                }
+                    lab_values.push(ParseResult::Parsed(lab_other));
+                },
                 _ => {
                     // panic!("Cannot add RK value to a non-NO/NE observation");
-                }
+                },
             }
         } else {
             // panic!("No observation in the list to store LB value");
@@ -330,14 +364,14 @@ impl InfraFile {
         if let Some(last_obs) = inv.observations.last_mut() {
             match &mut last_obs.values {
                 ObservationValues::NO { lab_values, .. } => {
-                    lab_values.push(ParsedValue::Some(lab_sieve));
-                }
+                    lab_values.push(ParseResult::Parsed(lab_sieve));
+                },
                 ObservationValues::NE { lab_values, .. } => {
-                    lab_values.push(ParsedValue::Some(lab_sieve));
-                }
+                    lab_values.push(ParseResult::Parsed(lab_sieve));
+                },
                 _ => {
                     // panic!("Cannot add RK value to a non-NO/NE observation");
-                }
+                },
             }
         } else {
             // panic!("No observation in the list to store LB value");
@@ -345,14 +379,14 @@ impl InfraFile {
     }
 
     fn parse_pa(inv: &mut Investigation, params: &[&str]) {
-        let mut load = ParsedValue::None;
-        let mut hits = ParsedValue::None;
+        let mut load = ParseResult::None;
+        let mut hits = ParseResult::None;
 
-        if let ParsedValue::Some(val) = Self::parse_value::<f32>(params, 1) {
+        if let ParseResult::Parsed(val) = Self::parse_value::<f32>(params, 1) {
             if val >= 0.0 {
-                load = ParsedValue::Some(val);
+                load = ParseResult::Parsed(val);
             } else {
-                hits = ParsedValue::Some(val.abs() as i32);
+                hits = ParseResult::Parsed(val.abs() as i32);
             }
         }
 
@@ -508,14 +542,14 @@ impl InfraFile {
     }
 
     fn parse_hp(inv: &mut Investigation, params: &[&str]) {
-        let mut hits = ParsedValue::None;
-        let mut pressure = ParsedValue::None;
+        let mut hits = ParseResult::None;
+        let mut pressure = ParseResult::None;
 
         if let Some(m) = params.get(3) {
             match *m {
                 "H" => hits = Self::parse_value::<i32>(params, 1),
                 "P" => pressure = Self::parse_value::<f32>(params, 1),
-                _ => {}
+                _ => {},
             }
 
             let obs = Observation {

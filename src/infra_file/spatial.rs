@@ -1,11 +1,11 @@
-use crate::{ParsedValue, TryParse};
+use crate::{ParseResult, TryParse};
 
 use std::fmt;
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Default)]
 pub struct Spatial {
-    pub coordinate_system: ParsedValue<CoordinateSystem>,
-    pub elevation_system: ParsedValue<ElevationSystem>,
+    pub coordinate_system: ParseResult<CoordinateSystem>,
+    pub elevation_system: ParseResult<ElevationSystem>,
 }
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Default)]
@@ -79,9 +79,8 @@ impl TryParse for CoordinateSystem {
             "GK29" | "ETRSGK29" | "ETRS-GK29" => Ok(CoordinateSystem::GK29),
             "GK30" | "ETRSGK30" | "ETRS-GK30" => Ok(CoordinateSystem::GK30),
             "GK31" | "ETRSGK31" | "ETRS-GK31" => Ok(CoordinateSystem::GK31),
-            "TM35" | "ETRSTM35" | "ETRS-TM35" | "TM35FIN" | "ETRSTM35FIN" | "ETRS-TM35FIN" => {
-                Ok(CoordinateSystem::TM35)
-            },
+            "TM35" | "ETRSTM35" | "ETRS-TM35" | "TM35FIN" | "ETRSTM35FIN"
+            | "ETRS-TM35FIN" => Ok(CoordinateSystem::TM35),
             _ => Err(input.to_string()),
         }
     }

@@ -1,10 +1,10 @@
-use crate::{ParsedValue, TryParse};
+use crate::{ParseResult, TryParse};
 
 use std::fmt;
 
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct Termination {
-    pub token: ParsedValue<TerminationToken>,
+    pub token: ParseResult<TerminationToken>,
 }
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Default)]

@@ -1,12 +1,11 @@
-use crate::{ParsedValue, TryParse};
-
+use crate::{ParseResult, TryParse};
 use std::fmt;
 
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct InitialBorehole {
-    pub depth: ParsedValue<f32>,
-    pub method: ParsedValue<InitialBoreToken>,
-    pub soil_type: ParsedValue<String>,
+    pub depth: ParseResult<f32>,
+    pub method: ParseResult<InitialBoreToken>,
+    pub soil_type: ParseResult<String>,
 }
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Default)]
@@ -32,24 +31,6 @@ impl TryParse for InitialBoreToken {
             "JA" => Ok(InitialBoreToken::JA),
             _ => Err(input.to_string()),
         }
-    }
-}
-
-impl fmt::Display for InitialBorehole {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if let Some(ref depth) = self.depth.format_display() {
-            writeln!(f, "Initial boring depth: {}", depth)?;
-        }
-
-        if let Some(ref method) = self.method.format_display() {
-            writeln!(f, "Initial boring method: {}", method)?;
-        }
-
-        if let Some(ref soil_type) = self.soil_type.format_display() {
-            writeln!(f, "Initial soil type: {}", soil_type)?;
-        }
-
-        Ok(())
     }
 }
 

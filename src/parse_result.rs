@@ -2,40 +2,40 @@ use chrono::NaiveDate;
 use std::fmt::{self, Display, Formatter};
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-pub enum ParsedValue<T> {
+pub enum ParseResult<T> {
     #[default]
     None,
     Fallback(String),
-    Some(T),
+    Parsed(T),
 }
 
-impl<T> ParsedValue<T> {
+impl<T> ParseResult<T> {
     pub fn new() -> Self {
         Self::default()
     }
 
     pub fn some(value: T) -> Self {
-        ParsedValue::Some(value)
+        ParseResult::Parsed(value)
     }
 
     pub fn fallback(message: String) -> Self {
-        ParsedValue::Fallback(message)
+        ParseResult::Fallback(message)
     }
 
     pub fn is_none(&self) -> bool {
-        matches!(self, ParsedValue::None)
+        matches!(self, ParseResult::None)
     }
 
     pub fn is_some(&self) -> bool {
-        matches!(self, ParsedValue::Some(_))
+        matches!(self, ParseResult::Parsed(_))
     }
 
     pub fn is_fallback(&self) -> bool {
-        matches!(self, ParsedValue::Fallback(_))
+        matches!(self, ParseResult::Fallback(_))
     }
 
     pub fn unwrap_fallback(self) -> Option<String> {
-        if let ParsedValue::Fallback(msg) = self {
+        if let ParseResult::Fallback(msg) = self {
             Some(msg)
         } else {
             None
@@ -53,7 +53,8 @@ impl TryParse for NaiveDate {
         if input == "00000000" {
             return Err(input.to_string());
         }
-        NaiveDate::parse_from_str(input, "%d%m%Y").map_err(|_| input.to_string())
+        NaiveDate::parse_from_str(input, "%d%m%Y")
+            .map_err(|_| input.to_string())
     }
 }
 
@@ -76,35 +77,39 @@ impl TryParse for f32 {
     }
 }
 
-impl<T: TryParse> ParsedValue<T> {
+impl<T: TryParse> ParseResult<T> {
     pub fn parse(input: &str) -> Self {
         if input == "-" {
-            ParsedValue::None
+            ParseResult::None
         } else {
             match T::try_parse(input) {
-                Ok(value) => ParsedValue::Some(value),
-                Err(original) => ParsedValue::Fallback(original),
+                Ok(value) => ParseResult::Parsed(value),
+                Err(original) => ParseResult::Fallback(original),
             }
         }
     }
 }
 
-impl<T: Display> Display for ParsedValue<T> {
+impl<T: Display> Display for ParseResult<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            ParsedValue::None => write!(f, "None"),
-            ParsedValue::Some(value) => write!(f, "{}", value),
-            ParsedValue::Fallback(original) => write!(f, "Fallback({})", original),
+            ParseResult::None => write!(f, "None"),
+            ParseResult::Parsed(value) => write!(f, "{}", value),
+            ParseResult::Fallback(original) => {
+                write!(f, "Fallback({})", original)
+            },
         }
     }
 }
 
-impl<T: Display> ParsedValue<T> {
+impl<T: Display> ParseResult<T> {
     pub fn format_display(&self) -> Option<String> {
         match self {
-            ParsedValue::Some(ref value) => Some(format!("{}", value)),
-            ParsedValue::Fallback(ref value) => Some(format!("{} (fallback)", value)),
-            ParsedValue::None => None,
+            ParseResult::Parsed(ref value) => Some(format!("{}", value)),
+            ParseResult::Fallback(ref value) => {
+                Some(format!("{} (fallback)", value))
+            },
+            ParseResult::None => None,
         }
     }
 }

@@ -1,15 +1,15 @@
-use crate::{ParsedValue, TryParse};
+use crate::{ParseResult, TryParse};
 
 use std::fmt;
 
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct Method {
-    pub token: ParsedValue<MethodToken>,
-    pub category: ParsedValue<i32>,
-    pub id: ParsedValue<String>,
-    pub standard: ParsedValue<String>,
-    pub sampler: ParsedValue<Sampler>,
-    pub specifier: ParsedValue<String>,
+    pub token: ParseResult<MethodToken>,
+    pub category: ParseResult<i32>,
+    pub id: ParseResult<String>,
+    pub standard: ParseResult<String>,
+    pub sampler: ParseResult<Sampler>,
+    pub specifier: ParseResult<String>,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
@@ -120,7 +120,7 @@ impl fmt::Display for MethodToken {
             MethodToken::PI => "Stick drilling",       // Finnish: Pistokairaus
             MethodToken::LY => "Hammer drilling",      // Finnish: Lyöntikairaus
             MethodToken::SI => "Field vane test",      // Finnish: Siipikairaus
-            MethodToken::HE => "Dynamic probing",      // Finnish: Heijarikairaus
+            MethodToken::HE => "Dynamic probing", // Finnish: Heijarikairaus
             MethodToken::HK => "Dynamic probing with torque", // Finnish: Heijarikairaus vääntömomentilla
             // TODO: Verify english translation
             MethodToken::PT => "Pipe drilling", // Finnish: Putkikairaus
@@ -129,58 +129,28 @@ impl fmt::Display for MethodToken {
             // TODO: Verify english translation
             MethodToken::PR => "Static penetration test", // Finnish: Puristinkairaus
             MethodToken::CP => "Cone penetration test (CPT)", // Finnish: Puristinkairaus (CPT)
-            MethodToken::CU => "CPTU-sounding (CPTU)",    // Finnish: Huokospainekairaus (CPTU)
+            MethodToken::CU => "CPTU-sounding (CPTU)", // Finnish: Huokospainekairaus (CPTU)
             MethodToken::HP => "Static dynamic penetration test", // Finnish: Puristin-heijarikairaus
-            MethodToken::PO => "MWD quality class 3",     // Finnish: Porakonekairaus
-            MethodToken::MW => "MWD-drilling",            // Finnish: MWD-kairaus
+            MethodToken::PO => "MWD quality class 3", // Finnish: Porakonekairaus
+            MethodToken::MW => "MWD-drilling",        // Finnish: MWD-kairaus
             MethodToken::VP => "Standpipe for groundwater table", // Finnish: Pohjaveden mittausputki
             MethodToken::VO => "Standpipe for perched water table", // Finnish: Orsiveden mittausputki
-            MethodToken::VK => "Water table in well",     // Finnish: Vedenpinnan mittaus kaivosta
+            MethodToken::VK => "Water table in well", // Finnish: Vedenpinnan mittaus kaivosta
             MethodToken::VPK => "Standpipe for groundwater table (bedrock)", // Finnish: Kalliopohjavesiputki
-            MethodToken::HV => "Piezometer measurement",  // Finnish: Huokosveden paineen mittaus
+            MethodToken::HV => "Piezometer measurement", // Finnish: Huokosveden paineen mittaus
             // TODO: Verify english translation
-            MethodToken::HU => "Air void pipe",          // Finnish: Huokosilmaputki
-            MethodToken::PS => "Pressuremeter test",     // Finnish: Pressometrikoe
+            MethodToken::HU => "Air void pipe", // Finnish: Huokosilmaputki
+            MethodToken::PS => "Pressuremeter test", // Finnish: Pressometrikoe
             MethodToken::PM => "Settlement measurement", // Finnish: Painumamittaus
             MethodToken::KO => "Test pit",               // Finnish: Koekuoppa
             // TODO: Verify english translation
             MethodToken::KE => "Core sampling (extended)", // Finnish: Kallionäytekairaus laajennettu
             // TODO: Verify english translation
             MethodToken::KR => "Core sampling (video)", // Finnish: Kallionäytekairaus videoitu
-            MethodToken::NO => "Disturbed sampling",    // Finnish: Häiritty näytteenotto
-            MethodToken::NE => "Undisturbed sampling",  // Finnish: Häiriintymätön näytteenotto
+            MethodToken::NO => "Disturbed sampling", // Finnish: Häiritty näytteenotto
+            MethodToken::NE => "Undisturbed sampling", // Finnish: Häiriintymätön näytteenotto
         };
         write!(f, "{}", token_str)
-    }
-}
-
-impl fmt::Display for Method {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if let Some(ref token) = self.token.format_display() {
-            writeln!(f, "Investigation type: {}", token)?;
-        }
-
-        if let Some(ref category) = self.category.format_display() {
-            writeln!(f, "Category: {}", category)?;
-        }
-
-        if let Some(ref id) = self.id.format_display() {
-            writeln!(f, "Method ID: {}", id)?;
-        }
-
-        if let Some(ref standard) = self.standard.format_display() {
-            writeln!(f, "Standard: {}", standard)?;
-        }
-
-        if let Some(ref sampler) = self.sampler.format_display() {
-            writeln!(f, "Sampler: {}", sampler)?;
-        }
-
-        if let Some(ref specifier) = self.specifier.format_display() {
-            writeln!(f, "Specifier: {}", specifier)?;
-        }
-
-        Ok(())
     }
 }
 

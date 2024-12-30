@@ -1,8 +1,8 @@
-use crate::ParsedValue;
+use crate::ParseResult;
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
 pub struct Format {
-    pub version: ParsedValue<String>,
-    pub used_software: ParsedValue<String>,
-    pub software_version: ParsedValue<String>,
+    pub version: ParseResult<String>,
+    pub used_software: ParseResult<String>,
+    pub software_version: ParseResult<String>,
 }

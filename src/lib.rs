@@ -1,9 +1,9 @@
 mod infra_file;
 mod investigation;
 mod observation;
-mod parsed_value;
+mod parse_result;
 
-pub use infra_file::file::File;
+pub use infra_file::file_info::FileInfo;
 pub use infra_file::format::Format;
 pub use infra_file::spatial::{CoordinateSystem, ElevationSystem, Spatial};
 pub use infra_file::InfraFile;
@@ -27,19 +27,19 @@ pub use observation::lab_results::LabResult;
 pub use observation::observation_values::ObservationValues;
 pub use observation::Observation;
 
-pub use parsed_value::{ParsedValue, TryParse};
+pub use parse_result::{ParseResult, TryParse};
 
 #[cfg(test)]
 mod tests {
     #[test]
-    fn parser_test() {
+    fn parse() {
         let file_path = "C:/PT/1.txt";
         let tek = crate::InfraFile::parse_file(file_path);
         if let Ok(tek) = tek {
-            //println!("{}", tek);
-            //let x = tek.count_investigations();
-            //println!("{:#?}", x);
-            tek.print_investigations_count();
+            for inv in tek.investigations {
+                println!("--------------------------------");
+                println!("{:#?}", inv.soil_layers);
+            }
         };
     }
 }
