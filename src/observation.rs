@@ -175,19 +175,19 @@ pub enum ObservationValues {
         sample_id: ParsedValue<String>,
         end_depth: ParsedValue<f32>,
         soil_type: ParsedValue<String>,
-        lab_values: Vec<ParsedValue<LabType>>,
+        lab_values: Vec<ParsedValue<LabResult>>,
     },
     NE {
         start_depth: ParsedValue<f32>,
         sample_id: ParsedValue<String>,
         end_depth: ParsedValue<f32>,
         soil_type: ParsedValue<String>,
-        lab_values: Vec<ParsedValue<LabType>>,
+        lab_values: Vec<ParsedValue<LabResult>>,
     },
 }
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Default)]
-pub enum LabType {
+pub enum LabResult {
     #[default]
     None,
     GrainSize {

@@ -3,12 +3,13 @@ mod investigation;
 mod observation;
 mod parsed_value;
 
-pub use infra_file::{File, Format, InfraFile, Spatial};
+pub use infra_file::{CoordinateSystem, ElevationSystem, File, Format, InfraFile, Spatial};
 pub use investigation::{
-    Classification, Coordinates, DepthlessRockSample, Equipment, InitialBorehole, Investigation, Line, Method, Organisations, Program,
-    Record, Standpipe, Termination, Work,
+    Classification, ClassificationName, Coordinates, DepthlessRockSample, Equipment, InitialBoreToken, InitialBorehole,
+    Investigation, Line, Method, MethodToken, Organisations, Program, Record, Sampler, Standpipe, Termination,
+    TerminationToken, Work,
 };
-pub use observation::Observation;
+pub use observation::{LabResult, Observation, ObservationValues};
 pub use parsed_value::ParsedValue;
 
 #[cfg(test)]

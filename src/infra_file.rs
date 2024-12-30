@@ -1,5 +1,7 @@
-use crate::investigation::{ClassificationName, Digitized, InitialBoreToken, Investigation, MethodToken, Sampler, TerminationToken};
-use crate::observation::{LabType, Observation, ObservationValues};
+use crate::investigation::{
+    ClassificationName, Digitized, InitialBoreToken, Investigation, MethodToken, Sampler, TerminationToken,
+};
+use crate::observation::{LabResult, Observation, ObservationValues};
 use crate::parsed_value::{ParsedValue, TryParse};
 
 use chardetng::EncodingDetector;
@@ -321,7 +323,7 @@ impl InfraFile {
     fn parse_hm(inv: &mut Investigation, params: &[&str]) {
         let combined = params.join(" ");
 
-        match inv.obs_holder.last_mut() {
+        match inv.observations.last_mut() {
             Some(last_obs) => {
                 last_obs.notes.push(ParsedValue::Some(combined));
             }
@@ -334,7 +336,7 @@ impl InfraFile {
     fn parse_tx(inv: &mut Investigation, params: &[&str]) {
         let combined = params.join(" ");
 
-        match inv.obs_holder.last_mut() {
+        match inv.observations.last_mut() {
             Some(last_obs) => {
                 last_obs.free_text.push(ParsedValue::Some(combined));
             }
@@ -347,7 +349,7 @@ impl InfraFile {
     fn parse_ht(inv: &mut Investigation, params: &[&str]) {
         let combined = params.join(" ");
 
-        match inv.obs_holder.last_mut() {
+        match inv.observations.last_mut() {
             Some(last_obs) => {
                 last_obs.hidden_text.push(ParsedValue::Some(combined));
             }
@@ -360,20 +362,20 @@ impl InfraFile {
     fn parse_em(inv: &mut Investigation, params: &[&str]) {
         let combined = params.join(" ");
 
-        if let Some(last_obs) = inv.obs_holder.last_mut() {
+        if let Some(last_obs) = inv.observations.last_mut() {
             last_obs.unofficial_soil_type.push(ParsedValue::Some(combined));
         }
     }
 
     fn parse_lb(inv: &mut Investigation, params: &[&str]) {
         // TODO: Implement common lab types
-        let lab_other = LabType::Other {
+        let lab_other = LabResult::Other {
             attribute: Self::parse_value::<String>(params, 0),
             result: Self::parse_value::<String>(params, 1),
             unit: Self::parse_value::<String>(params, 2),
         };
 
-        if let Some(last_obs) = inv.obs_holder.last_mut() {
+        if let Some(last_obs) = inv.observations.last_mut() {
             match &mut last_obs.values {
                 ObservationValues::NO { lab_values, .. } => {
                     lab_values.push(ParsedValue::Some(lab_other));
@@ -391,12 +393,12 @@ impl InfraFile {
     }
 
     fn parse_rk(inv: &mut Investigation, params: &[&str]) {
-        let lab_sieve = LabType::GrainSize {
+        let lab_sieve = LabResult::GrainSize {
             grain_mm: Self::parse_value::<f32>(params, 0),
             pass_percent: Self::parse_value::<f32>(params, 1),
         };
 
-        if let Some(last_obs) = inv.obs_holder.last_mut() {
+        if let Some(last_obs) = inv.observations.last_mut() {
             match &mut last_obs.values {
                 ObservationValues::NO { lab_values, .. } => {
                     lab_values.push(ParsedValue::Some(lab_sieve));
@@ -436,7 +438,7 @@ impl InfraFile {
             ..Default::default()
         };
 
-        inv.obs_holder.push(obs);
+        inv.observations.push(obs);
     }
 
     fn parse_pi(inv: &mut Investigation, params: &[&str]) {
@@ -448,7 +450,7 @@ impl InfraFile {
             ..Default::default()
         };
 
-        inv.obs_holder.push(obs);
+        inv.observations.push(obs);
     }
 
     fn parse_ly(inv: &mut Investigation, params: &[&str]) {
@@ -462,7 +464,7 @@ impl InfraFile {
             ..Default::default()
         };
 
-        inv.obs_holder.push(obs);
+        inv.observations.push(obs);
     }
 
     fn parse_si(inv: &mut Investigation, params: &[&str]) {
@@ -477,7 +479,7 @@ impl InfraFile {
             ..Default::default()
         };
 
-        inv.obs_holder.push(obs);
+        inv.observations.push(obs);
     }
 
     fn parse_he(inv: &mut Investigation, params: &[&str]) {
@@ -490,7 +492,7 @@ impl InfraFile {
             ..Default::default()
         };
 
-        inv.obs_holder.push(obs);
+        inv.observations.push(obs);
     }
 
     fn parse_hk(inv: &mut Investigation, params: &[&str]) {
@@ -504,7 +506,7 @@ impl InfraFile {
             ..Default::default()
         };
 
-        inv.obs_holder.push(obs);
+        inv.observations.push(obs);
     }
 
     fn parse_pt(inv: &mut Investigation, params: &[&str]) {
@@ -516,7 +518,7 @@ impl InfraFile {
             ..Default::default()
         };
 
-        inv.obs_holder.push(obs);
+        inv.observations.push(obs);
     }
 
     fn parse_tr(inv: &mut Investigation, params: &[&str]) {
@@ -528,7 +530,7 @@ impl InfraFile {
             ..Default::default()
         };
 
-        inv.obs_holder.push(obs);
+        inv.observations.push(obs);
     }
 
     fn parse_pr(inv: &mut Investigation, params: &[&str]) {
@@ -542,7 +544,7 @@ impl InfraFile {
             ..Default::default()
         };
 
-        inv.obs_holder.push(obs);
+        inv.observations.push(obs);
     }
 
     fn parse_cp(inv: &mut Investigation, params: &[&str]) {
@@ -557,7 +559,7 @@ impl InfraFile {
             ..Default::default()
         };
 
-        inv.obs_holder.push(obs);
+        inv.observations.push(obs);
     }
 
     fn parse_cu(inv: &mut Investigation, params: &[&str]) {
@@ -573,7 +575,7 @@ impl InfraFile {
             ..Default::default()
         };
 
-        inv.obs_holder.push(obs);
+        inv.observations.push(obs);
     }
 
     fn parse_hp(inv: &mut Investigation, params: &[&str]) {
@@ -600,7 +602,7 @@ impl InfraFile {
                 ..Default::default()
             };
 
-            inv.obs_holder.push(obs);
+            inv.observations.push(obs);
         }
     }
 
@@ -614,7 +616,7 @@ impl InfraFile {
             ..Default::default()
         };
 
-        inv.obs_holder.push(obs);
+        inv.observations.push(obs);
     }
 
     fn parse_mw(inv: &mut Investigation, params: &[&str]) {
@@ -634,7 +636,7 @@ impl InfraFile {
             ..Default::default()
         };
 
-        inv.obs_holder.push(obs);
+        inv.observations.push(obs);
     }
 
     fn parse_vp(inv: &mut Investigation, params: &[&str]) {
@@ -650,7 +652,7 @@ impl InfraFile {
             ..Default::default()
         };
 
-        inv.obs_holder.push(obs);
+        inv.observations.push(obs);
     }
 
     fn parse_vo(inv: &mut Investigation, params: &[&str]) {
@@ -666,7 +668,7 @@ impl InfraFile {
             ..Default::default()
         };
 
-        inv.obs_holder.push(obs);
+        inv.observations.push(obs);
     }
 
     fn parse_vk(inv: &mut Investigation, params: &[&str]) {
@@ -680,7 +682,7 @@ impl InfraFile {
             ..Default::default()
         };
 
-        inv.obs_holder.push(obs);
+        inv.observations.push(obs);
     }
 
     fn parse_vpk(inv: &mut Investigation, params: &[&str]) {
@@ -692,7 +694,7 @@ impl InfraFile {
             ..Default::default()
         };
 
-        inv.obs_holder.push(obs);
+        inv.observations.push(obs);
     }
 
     fn parse_hv(inv: &mut Investigation, params: &[&str]) {
@@ -706,7 +708,7 @@ impl InfraFile {
             ..Default::default()
         };
 
-        inv.obs_holder.push(obs);
+        inv.observations.push(obs);
     }
 
     fn parse_hu(inv: &mut Investigation, params: &[&str]) {
@@ -722,7 +724,7 @@ impl InfraFile {
             ..Default::default()
         };
 
-        inv.obs_holder.push(obs);
+        inv.observations.push(obs);
     }
 
     fn parse_ps(inv: &mut Investigation, params: &[&str]) {
@@ -735,7 +737,7 @@ impl InfraFile {
             ..Default::default()
         };
 
-        inv.obs_holder.push(obs);
+        inv.observations.push(obs);
     }
 
     fn parse_pm(inv: &mut Investigation, params: &[&str]) {
@@ -748,7 +750,7 @@ impl InfraFile {
             ..Default::default()
         };
 
-        inv.obs_holder.push(obs);
+        inv.observations.push(obs);
     }
 
     fn parse_ko(inv: &mut Investigation, params: &[&str]) {
@@ -764,7 +766,7 @@ impl InfraFile {
             ..Default::default()
         };
 
-        inv.obs_holder.push(obs);
+        inv.observations.push(obs);
     }
 
     fn parse_ke(inv: &mut Investigation, params: &[&str]) {
@@ -776,7 +778,7 @@ impl InfraFile {
             ..Default::default()
         };
 
-        inv.obs_holder.push(obs);
+        inv.observations.push(obs);
     }
 
     fn parse_kr(inv: &mut Investigation, params: &[&str]) {
@@ -788,7 +790,7 @@ impl InfraFile {
             ..Default::default()
         };
 
-        inv.obs_holder.push(obs);
+        inv.observations.push(obs);
     }
 
     fn parse_no(inv: &mut Investigation, params: &[&str]) {
@@ -803,7 +805,7 @@ impl InfraFile {
             ..Default::default()
         };
 
-        inv.obs_holder.push(obs);
+        inv.observations.push(obs);
     }
 
     fn parse_ne(inv: &mut Investigation, params: &[&str]) {
@@ -818,6 +820,6 @@ impl InfraFile {
             ..Default::default()
         };
 
-        inv.obs_holder.push(obs);
+        inv.observations.push(obs);
     }
 }

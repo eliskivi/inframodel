@@ -19,7 +19,6 @@ pub struct Investigation {
     pub standpipe: Standpipe,
 
     pub observations: Vec<Observation>,
-    pub obs_holder: Vec<Observation>,
 
     pub notes: Vec<ParsedValue<String>>,
     pub free_text: Vec<ParsedValue<String>>,
