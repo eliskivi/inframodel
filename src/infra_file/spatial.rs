@@ -81,7 +81,7 @@ impl TryParse for CoordinateSystem {
             "GK31" | "ETRSGK31" | "ETRS-GK31" => Ok(CoordinateSystem::GK31),
             "TM35" | "ETRSTM35" | "ETRS-TM35" | "TM35FIN" | "ETRSTM35FIN" | "ETRS-TM35FIN" => {
                 Ok(CoordinateSystem::TM35)
-            }
+            },
             _ => Err(input.to_string()),
         }
     }

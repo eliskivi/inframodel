@@ -2,6 +2,11 @@
 name = "inframodel"
 version = "0.1.0"
 edition = "2021"
+description = "A library to parse InfraModel geotechnical ground investigation files used in Finland"
+authors = ["Elis Kivi <elis.kivi1@gmail.com>"]
+keywords = ["infra", "inframodel", "tek", "geotechnical"]
+license = "MIT"
+
 
 [dependencies]
 chardetng = "0.1.17"
