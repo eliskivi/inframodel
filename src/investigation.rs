@@ -13,10 +13,9 @@ pub(crate) mod termination;
 pub(crate) mod work;
 
 use crate::{
-    Classification, Coordinates, DepthlessRockSample, Equipment,
-    InitialBorehole, Line, Method, Observation, ObservationValues,
-    Organisations, ParseResult, Program, Record, Spatial, Standpipe,
-    Termination, Work,
+    Classification, Coordinates, DepthlessRockSample, Equipment, InitialBorehole, Line, Method,
+    Observation, ObservationValues, Organisations, ParseResult, Program, Record, Spatial,
+    Standpipe, Termination, Work,
 };
 
 #[derive(Clone, PartialEq, Debug, Default)]
@@ -86,41 +85,40 @@ impl Investigation {
                     } else if let Some(ref soil) = last_soil_type {
                         *soil_type = ParseResult::Parsed(soil.clone());
                     }
-                },
-                _ => {},
+                }
+                _ => {}
             }
         }
     }
 
     fn calculate_total_depth(&mut self) {
-        self.total_depth =
-            self.observations.last().and_then(|last_observation| {
-                let depth_result = match &last_observation.values {
-                    ObservationValues::PA { depth, .. }
-                    | ObservationValues::PI { depth, .. }
-                    | ObservationValues::LY { depth, .. }
-                    | ObservationValues::SI { depth, .. }
-                    | ObservationValues::HE { depth, .. }
-                    | ObservationValues::HK { depth, .. }
-                    | ObservationValues::PT { depth, .. }
-                    | ObservationValues::TR { depth, .. }
-                    | ObservationValues::PR { depth, .. }
-                    | ObservationValues::CP { depth, .. }
-                    | ObservationValues::CU { depth, .. }
-                    | ObservationValues::HP { depth, .. }
-                    | ObservationValues::PO { depth, .. }
-                    | ObservationValues::MW { depth, .. }
-                    | ObservationValues::HV { depth, .. }
-                    | ObservationValues::KO { depth, .. }
-                    | ObservationValues::PS { depth, .. } => depth,
-                    _ => return None,
-                };
+        self.total_depth = self.observations.last().and_then(|last_observation| {
+            let depth_result = match &last_observation.values {
+                ObservationValues::PA { depth, .. }
+                | ObservationValues::PI { depth, .. }
+                | ObservationValues::LY { depth, .. }
+                | ObservationValues::SI { depth, .. }
+                | ObservationValues::HE { depth, .. }
+                | ObservationValues::HK { depth, .. }
+                | ObservationValues::PT { depth, .. }
+                | ObservationValues::TR { depth, .. }
+                | ObservationValues::PR { depth, .. }
+                | ObservationValues::CP { depth, .. }
+                | ObservationValues::CU { depth, .. }
+                | ObservationValues::HP { depth, .. }
+                | ObservationValues::PO { depth, .. }
+                | ObservationValues::MW { depth, .. }
+                | ObservationValues::HV { depth, .. }
+                | ObservationValues::KO { depth, .. }
+                | ObservationValues::PS { depth, .. } => depth,
+                _ => return None,
+            };
 
-                match depth_result {
-                    ParseResult::Parsed(x) => Some(*x),
-                    _ => None,
-                }
-            });
+            match depth_result {
+                ParseResult::Parsed(x) => Some(*x),
+                _ => None,
+            }
+        });
     }
 
     pub fn calculate_soil_layer_thicknesses(&mut self) {

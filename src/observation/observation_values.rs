@@ -200,7 +200,7 @@ impl ObservationValues {
                 } else {
                     None
                 }
-            },
+            }
             _ => None,
         }
     }
@@ -226,7 +226,7 @@ impl ObservationValues {
                 } else {
                     None
                 }
-            },
+            }
 
             // Variants without soil_type
             _ => None,

@@ -53,8 +53,7 @@ impl TryParse for NaiveDate {
         if input == "00000000" {
             return Err(input.to_string());
         }
-        NaiveDate::parse_from_str(input, "%d%m%Y")
-            .map_err(|_| input.to_string())
+        NaiveDate::parse_from_str(input, "%d%m%Y").map_err(|_| input.to_string())
     }
 }
 
@@ -97,7 +96,7 @@ impl<T: Display> Display for ParseResult<T> {
             ParseResult::Parsed(value) => write!(f, "{}", value),
             ParseResult::Fallback(original) => {
                 write!(f, "Fallback({})", original)
-            },
+            }
         }
     }
 }
@@ -106,9 +105,7 @@ impl<T: Display> ParseResult<T> {
     pub fn format_display(&self) -> Option<String> {
         match self {
             ParseResult::Parsed(ref value) => Some(format!("{}", value)),
-            ParseResult::Fallback(ref value) => {
-                Some(format!("{} (fallback)", value))
-            },
+            ParseResult::Fallback(ref value) => Some(format!("{} (fallback)", value)),
             ParseResult::None => None,
         }
     }

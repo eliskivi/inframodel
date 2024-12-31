@@ -3,9 +3,7 @@ pub(crate) mod format;
 pub(crate) mod parse;
 pub(crate) mod spatial;
 
-use crate::{
-    FileInfo, Format, Investigation, MethodToken, ParseResult, Spatial,
-};
+use crate::{FileInfo, Format, Investigation, MethodToken, ParseResult, Spatial};
 
 use std::collections::HashMap;
 

@@ -120,7 +120,7 @@ impl fmt::Display for MethodToken {
             MethodToken::PI => "Stick drilling",       // Finnish: Pistokairaus
             MethodToken::LY => "Hammer drilling",      // Finnish: Lyöntikairaus
             MethodToken::SI => "Field vane test",      // Finnish: Siipikairaus
-            MethodToken::HE => "Dynamic probing", // Finnish: Heijarikairaus
+            MethodToken::HE => "Dynamic probing",      // Finnish: Heijarikairaus
             MethodToken::HK => "Dynamic probing with torque", // Finnish: Heijarikairaus vääntömomentilla
             // TODO: Verify english translation
             MethodToken::PT => "Pipe drilling", // Finnish: Putkikairaus
@@ -129,10 +129,10 @@ impl fmt::Display for MethodToken {
             // TODO: Verify english translation
             MethodToken::PR => "Static penetration test", // Finnish: Puristinkairaus
             MethodToken::CP => "Cone penetration test (CPT)", // Finnish: Puristinkairaus (CPT)
-            MethodToken::CU => "CPTU-sounding (CPTU)", // Finnish: Huokospainekairaus (CPTU)
+            MethodToken::CU => "CPTU-sounding (CPTU)",    // Finnish: Huokospainekairaus (CPTU)
             MethodToken::HP => "Static dynamic penetration test", // Finnish: Puristin-heijarikairaus
-            MethodToken::PO => "MWD quality class 3", // Finnish: Porakonekairaus
-            MethodToken::MW => "MWD-drilling",        // Finnish: MWD-kairaus
+            MethodToken::PO => "MWD quality class 3",             // Finnish: Porakonekairaus
+            MethodToken::MW => "MWD-drilling",                    // Finnish: MWD-kairaus
             MethodToken::VP => "Standpipe for groundwater table", // Finnish: Pohjaveden mittausputki
             MethodToken::VO => "Standpipe for perched water table", // Finnish: Orsiveden mittausputki
             MethodToken::VK => "Water table in well", // Finnish: Vedenpinnan mittaus kaivosta
@@ -142,13 +142,13 @@ impl fmt::Display for MethodToken {
             MethodToken::HU => "Air void pipe", // Finnish: Huokosilmaputki
             MethodToken::PS => "Pressuremeter test", // Finnish: Pressometrikoe
             MethodToken::PM => "Settlement measurement", // Finnish: Painumamittaus
-            MethodToken::KO => "Test pit",               // Finnish: Koekuoppa
+            MethodToken::KO => "Test pit",      // Finnish: Koekuoppa
             // TODO: Verify english translation
             MethodToken::KE => "Core sampling (extended)", // Finnish: Kallionäytekairaus laajennettu
             // TODO: Verify english translation
             MethodToken::KR => "Core sampling (video)", // Finnish: Kallionäytekairaus videoitu
-            MethodToken::NO => "Disturbed sampling", // Finnish: Häiritty näytteenotto
-            MethodToken::NE => "Undisturbed sampling", // Finnish: Häiriintymätön näytteenotto
+            MethodToken::NO => "Disturbed sampling",    // Finnish: Häiritty näytteenotto
+            MethodToken::NE => "Undisturbed sampling",  // Finnish: Häiriintymätön näytteenotto
         };
         write!(f, "{}", token_str)
     }

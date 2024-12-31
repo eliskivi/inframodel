@@ -2,9 +2,12 @@
 name = "inframodel"
 version = "0.1.0"
 edition = "2021"
-description = "A library to parse InfraModel geotechnical ground investigation files used in Finland"
+description = "A library to parse InfraModel geotechnical ground investigation data format used in Finland"
 authors = ["Elis Kivi <elis.kivi1@gmail.com>"]
-keywords = ["infra", "inframodel", "tek", "geotechnical"]
+homepage = "https://github.com/eliskivi/inframodel"
+repository = "https://github.com/eliskivi/inframodel"
+readme = "README.md"
+keywords = ["infra", "geo", "inframodel", "geotechnical", "finland"]
 license = "MIT"
 
 
