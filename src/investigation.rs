@@ -13,13 +13,17 @@ pub(crate) mod termination;
 pub(crate) mod work;
 
 use crate::{
-    Classification, Coordinates, DepthlessRockSample, Equipment, InitialBorehole, Line, Method,
-    Observation, ObservationValues, Organisations, ParseResult, Program, Record, Spatial,
+    Classification, Coordinates, DepthlessRockSample, Equipment, FileInfo, InitialBorehole, Line,
+    Method, Observation, ObservationValues, Organisations, ParseResult, Program, Record, Spatial,
     Standpipe, Termination, Work,
 };
 
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct Investigation {
+    // File-level properties
+    pub file_info: FileInfo,
+    pub spatial: Spatial,
+
     // Parsed properties
     pub organisations: Organisations,
     pub classification: Classification,
@@ -38,8 +42,8 @@ pub struct Investigation {
     pub free_text: Vec<ParseResult<String>>,
     pub hidden_text: Vec<ParseResult<String>>,
     pub observations: Vec<Observation>,
+
     // Computed and additional properties
-    pub spatial: Spatial,
     pub total_depth: Option<f32>,
     pub soil_layers: Vec<SoilLayer>,
 }

@@ -23,15 +23,13 @@ impl InfraFile {
         let mut detector = EncodingDetector::new();
         detector.feed(&buffer, true);
         let encoding = detector.guess(None, true);
-
         let (decoded, _, _) = encoding.decode(&buffer);
         let lines: Vec<&str> = decoded.lines().collect();
 
         let mut infra = InfraFile {
-            file: FileInfo {
+            file_info: FileInfo {
                 path: Some(file_path.to_string()),
                 encoding: Some(encoding.name().to_string()),
-                text: Some(decoded.parse().unwrap()),
             },
             ..Default::default()
         };
@@ -123,6 +121,7 @@ impl InfraFile {
 
     fn compute_properties(infra: &mut InfraFile) {
         for investigation in &mut infra.investigations {
+            investigation.file_info = infra.file_info.clone();
             investigation.spatial = infra.spatial.clone();
             investigation.compute_properties();
         }

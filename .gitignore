@@ -1,3 +1,4 @@
+data/
 debug/
 target/
 Cargo.lock
